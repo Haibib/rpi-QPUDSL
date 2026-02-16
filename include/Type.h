@@ -7,6 +7,8 @@ namespace qpudsl {
 
 enum class dType{
     INT32,
+    FLOAT32,
+    TemplateT
 };
 
 struct Level {
@@ -57,6 +59,9 @@ struct TensorType {
 
     TensorType(Format format, dType dtype)
         : format(std::move(format)), dtype(std::move(dtype)) {}
+
+     TensorType() : dtype(dType::TemplateT) {}
 };
 
+Format make_format(const Format &a, const Format &b);
 } // namespace qpudsl

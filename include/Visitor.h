@@ -5,7 +5,12 @@
 namespace qpudsl {
 
 struct Visitor {
-    
+    // Expr
+    virtual void visit(const Add *);
+    virtual void visit(const Bc *);
+    virtual void visit(const Mul *);
+    virtual void visit(const Sum *);
+    virtual void visit(const Tensor *);
 };
 
 #define RESTRICT_VISITOR(IRNODE)                                               \
