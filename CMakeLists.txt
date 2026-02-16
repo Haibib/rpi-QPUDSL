@@ -58,6 +58,8 @@ target_sources(
     rpi-qpudsl_library
     PRIVATE
     src/Visitor.cpp
+    src/Type.cpp
+    src/Printer.cpp
 )
 
 target_sources(
@@ -73,6 +75,8 @@ target_sources(
     include/IRNode.h
     include/Error.h
     include/Scope.h
+    include/Type.h
+    include/Printer.h
 )
 
 if (rpi-qpudsl_ENABLE_WARNINGS)

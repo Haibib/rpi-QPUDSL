@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace nacho {
+namespace qpudsl {
 
 class Error final : public std::runtime_error {
     using std::runtime_error::runtime_error;
