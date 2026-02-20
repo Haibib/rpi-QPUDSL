@@ -1,4 +1,4 @@
-#include "addshader.h"
+#include "subshader.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -9,7 +9,7 @@ __declspec(align(8))
 #elif defined(__GNUC__)
 __attribute__((aligned(8)))
 #endif
-uint32_t addshader[102] = {
+uint32_t subshader[102] = {
 0x15827d80, 0x10020027,
 0x15827d80, 0x10020067,
 0x15827d80, 0x100200a7,
@@ -43,8 +43,8 @@ uint32_t addshader[102] = {
 0x15c27d80, 0x10021167,
 0x15c27d80, 0x100211a7,
 0x15ca7d80, 0x100009e7,
-0x0c145dc0, 0x10020827,
-0x0c186dc0, 0x10020867,
+0x0d145dc0, 0x10020827,
+0x0d186dc0, 0x10020867,
 0x159e7000, 0x10020c27,
 0x159e7240, 0x10020c27,
 0x159f2fc0, 0x100009e7,
@@ -63,7 +63,7 @@ uint32_t addshader[102] = {
 0x009e7000, 0x100009e7
 };
 #ifdef __HIGHC__
-#pragma Align_to(8, addshader)
+#pragma Align_to(8, subshader)
 #ifdef __cplusplus
 }
 #endif
