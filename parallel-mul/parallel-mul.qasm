@@ -1,6 +1,4 @@
-.include "../share/vc4inc/vc4.qinc"
-
-# LOAD UNIFORMS INTO REGISTERS  
+.include "../share/vc4inc/vc4.qinc" 
 mov   ra0, unif #A
 mov   ra1, unif #B
 mov   ra2, unif #C
@@ -11,15 +9,6 @@ mov rb0, 128
 shl rb1, ra4, 2 #Multiply by 4 to get base row
 shl rb2, ra4, 6 #vdr_setup_0 shift (4 + 2)
 shl rb3, ra4, 9 #vdw_setup_0 shift (7 + 2)
-
-add r0, ra4, 1
-shl r0, r0, 3
-:stagger
-    sub.setf r0, r0, 1
-    brr.anynz -, :stagger
-    nop
-    nop
-    nop
 
 :loop
     # Load 2 rows from DMA to VPM at y = 0
