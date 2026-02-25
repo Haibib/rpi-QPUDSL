@@ -72,6 +72,9 @@ bool compatible_formats(const Format &a, const Format &b) {
 }
 
 
+
+} // namespace
+
 Format
 make_format(const Format &a, const Format &b) {
     internal_assert(compatible_formats(a, b))
@@ -142,9 +145,6 @@ make_format(const Format &a, const Format &b) {
 
     return out;
 }
-
-} // namespace
-
 
 
 int Format::get_level_order(const std::string &idx) const {

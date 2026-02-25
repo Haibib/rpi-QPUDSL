@@ -1,5 +1,5 @@
 #include "Frontend.h"
-
+#include "Type.h"
 #include "Error.h"
 #include "Printer.h"
 

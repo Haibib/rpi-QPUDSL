@@ -60,6 +60,10 @@ target_sources(
     src/Visitor.cpp
     src/Type.cpp
     src/Printer.cpp
+    src/Mutator.cpp
+    src/Frontend.cpp
+    src/CIN.cpp
+    src/CompileToCIN.cpp
 )
 
 target_sources(
@@ -77,6 +81,9 @@ target_sources(
     include/Scope.h
     include/Type.h
     include/Printer.h
+    include/Mutator.h
+    include/CIN.h
+    include/CompileToCIN.h
 )
 
 if (rpi-qpudsl_ENABLE_WARNINGS)

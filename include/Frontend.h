@@ -6,6 +6,7 @@
 #include "IntrusivePtr.h"
 #include "Type.h"
 #include "Visitor.h"
+#include "Mutator.h"
 
 namespace qpudsl {
 
@@ -21,14 +22,19 @@ enum class ExprEnum {
 
 using IRExprNode = IRNode<Expr, ExprEnum>;
 
+/** This is necessary to get mutate() to work properly...
+ *  They all contain their types (e.g. Int(32), Float(32))
+ */
 struct BaseExprNode : public IRExprNode {
     BaseExprNode(ExprEnum t) : IRExprNode(t) {}
     TensorType type;
+    virtual Expr mutate_Expr(Mutator *m) const = 0;
 };
 
 template <typename T>
 struct ExprNode : public BaseExprNode {
     void accept(Visitor *v) const override { return v->visit((const T *)this); }
+    Expr mutate_Expr(Mutator *m) const override;
     ExprNode() : BaseExprNode(T::node_type) {}
     ~ExprNode() override = default;
 };
@@ -59,6 +65,10 @@ inline void destroy<IRExprNode>(const IRExprNode *t) {
     delete t;
 }
 
+template <typename T>
+Expr ExprNode<T>::mutate_Expr(Mutator *m) const {
+    return m->visit((const T *)this);
+}
 
 struct Add : ExprNode<Add> {
     Expr a, b;

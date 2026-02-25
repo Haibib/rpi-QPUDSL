@@ -26,4 +26,29 @@ namespace qpudsl {
     struct Forall;
     struct Where;
 
+    namespace llir {
+        struct lRegType;
+        struct Accumulator;
+        struct MemoryA;
+        struct MemoryB;
+        struct Special;
+
+        struct lOpr;
+        struct Reg;
+        struct Const;
+        struct Macro;
+
+
+        struct lStmt;
+        struct Mov;
+        struct Shl;
+        struct Add;
+        struct Sub;
+        struct Mul;
+        struct Branch;
+        struct Sequence;
+        struct Label;
+        struct SpecialStmt;
+    }
+
 } // namespace qpudsl
