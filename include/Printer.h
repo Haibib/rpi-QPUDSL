@@ -4,6 +4,7 @@
 #include "Type.h"
 #include "CIN.h"
 #include "Frontend.h"
+#include "llir/LLIR.h"
 
 #include <iostream>
 
@@ -64,7 +65,8 @@ struct Printer : public Visitor {
     virtual void visit(const llir::Branch *) override;
     virtual void visit(const llir::Sequence *) override;
     virtual void visit(const llir::SpecialStmt *) override;
-    virtual void visit (const llir::Label *) override;
+    virtual void visit(const llir::Label *) override;
+    virtual void visit(const llir::RawStmt *) override;
     virtual void print(const llir::FlagsExpr flag);
     void indent() { indent_count++; }
     void dedent() { indent_count--; }

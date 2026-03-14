@@ -42,6 +42,7 @@ struct Visitor {
     virtual void visit(const llir::Sequence *);
     virtual void visit(const llir::SpecialStmt *);
     virtual void visit(const llir::Label *);
+    virtual void visit(const llir::RawStmt *);
 };
 
 #define RESTRICT_VISITOR(IRNODE)                                               \

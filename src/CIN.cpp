@@ -87,4 +87,4 @@ CIN Where::make(std::string temp, TensorType temp_type, CIN producer,
     return node;
 }
 
-} // namespace nacho
+} // namespace qpudsl

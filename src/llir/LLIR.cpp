@@ -75,9 +75,10 @@ lStmt Shl::make(lOpr dst, lOpr src0, lOpr src1, FlagsExpr flags) {
     internal_assert(src1.defined())
         << "Cannot make Shl with undefined src1";
     Shl *node = new Shl;
-    node->dst = std::move(dst);
-    node->src0 = std::move(src0);
-    node->src1 = std::move(src1);
+    node->dst   = std::move(dst);
+    node->src   = std::move(src0);
+    node->shift = std::move(src1);
+    node->flags = flags;
     return node;
 } 
 
@@ -154,6 +155,12 @@ lStmt SpecialStmt::make(Kind kind) {
 lStmt Label::make(std::string str) {
     Label * node = new Label;
     node->label = std::move(str);
+    return node;
+}
+
+lStmt RawStmt::make(std::string text) {
+    RawStmt *node = new RawStmt;
+    node->text = std::move(text);
     return node;
 }
 

@@ -57,7 +57,6 @@ void Visitor::visit(const llir::Reg *node) {
 }
 void Visitor::visit(const llir::Const *node) { (void)node; }
 void Visitor::visit(const llir::Macro *node) { (void)node; }
-void Visitor::visit(const llir::Special *node) { (void)node; }
 
 void Visitor::visit(const llir::Mov *node) {
     node->dst.accept(this);
@@ -92,11 +91,21 @@ void Visitor::visit(const llir::Branch *node) {
     (void)node;
 }
 
+void Visitor::visit(const llir::Sequence *node) {
+    for (const auto &stmt : node->stmts) {
+        stmt.accept(this);
+    }
+}
+
 void Visitor::visit(const llir::SpecialStmt *node) {
     (void)node;
 }
 
 void Visitor::visit(const llir::Label * node) {
+    (void)node;
+}
+
+void Visitor::visit(const llir::RawStmt * node) {
     (void)node;
 }
 

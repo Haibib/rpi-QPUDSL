@@ -49,6 +49,7 @@ namespace qpudsl {
         struct Sequence;
         struct Label;
         struct SpecialStmt;
+        struct RawStmt;
     }
 
 } // namespace qpudsl

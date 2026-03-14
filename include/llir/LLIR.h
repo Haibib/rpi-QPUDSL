@@ -37,7 +37,8 @@ enum class lStmtEnum {
     Branch,
     Sequence,
     SpecialStmt,
-    Label
+    Label,
+    RawStmt,
 };
     
 enum class FlagsExpr {
@@ -293,6 +294,15 @@ struct SpecialStmt : lStmtNode<SpecialStmt> {
     static lStmt make(Kind kind);
 
     static const lStmtEnum node_type = lStmtEnum::SpecialStmt;
+};
+
+// Emit a raw assembler string verbatim (e.g. ".include" directives).
+struct RawStmt : lStmtNode<RawStmt> {
+    std::string text;
+
+    static lStmt make(std::string text);
+
+    static const lStmtEnum node_type = lStmtEnum::RawStmt;
 };
 
 } // namespace llir

@@ -390,6 +390,10 @@ void Printer::visit(const llir::Label * node) {
     os<<"\n";
 }
 
+void Printer::visit(const llir::RawStmt * node) {
+    print_indent();
+    os << node->text << "\n";
+}
 
 
 }// namespace qpudsl
