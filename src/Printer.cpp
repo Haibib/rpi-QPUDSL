@@ -170,7 +170,32 @@ void Printer::visit(const cMul *node) {
 }
 
 void Printer::visit(const cTensor *node) {
-    print_tensor(node->name, node->type);
+    os << node->name;
+    if (!node->slices.empty()) {
+        os << "[";
+        for (size_t i = 0; i < node->slices.size(); ++i) {
+            const auto &sr = node->slices[i];
+            if (i > 0) os << ", ";
+            if (sr.start == 0 && sr.size == -1) {
+                os << ":";
+            } else {
+                os << sr.start << ":" << (sr.size == -1 ? -1 : sr.start + sr.size);
+            }
+        }
+        os << "]";
+    } else {
+        // Print with type format levels as before
+        if (!node->type.format.levels.empty()) {
+            os << "[";
+            bool first = true;
+            for (const auto &lvl : node->type.format.levels) {
+                if (!first) os << ", ";
+                first = false;
+                os << lvl.index;
+            }
+            os << "]";
+        }
+    }
 }
 
 void Printer::print(const CIN &cin) { cin.accept(this); }
@@ -282,6 +307,9 @@ void Printer::print(const llir::FlagsExpr flag) {
     case llir::FlagsExpr::AnyNZ:
         os<<".anynz";
         break;
+    case llir::FlagsExpr::AllZ:
+        os<<".allz";
+        break;
     default:
         internal_assert(false) << "Unknown FlagsExpr";
         break;
@@ -304,6 +332,19 @@ void Printer::visit(const llir::Mov * node) {
 void Printer::visit(const llir::Shl* node) {
     print_indent();
     os<<"shl";
+    print(node->flags);
+    os<<" ";
+    print(node->dst);
+    os<<", ";
+    print(node->src);
+    os<<", ";
+    print(node->shift);
+    os<<"\n";
+}
+
+void Printer::visit(const llir::Shr* node) {
+    print_indent();
+    os<<"shr";
     print(node->flags);
     os<<" ";
     print(node->dst);

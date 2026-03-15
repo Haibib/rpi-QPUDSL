@@ -69,6 +69,12 @@ void Visitor::visit(const llir::Shl *node) {
     node->shift.accept(this);
 }
 
+void Visitor::visit(const llir::Shr *node) {
+    node->dst.accept(this);
+    node->src.accept(this);
+    node->shift.accept(this);
+}
+
 void Visitor::visit(const llir::Add *node) {
     node->dst.accept(this);
     node->src0.accept(this);

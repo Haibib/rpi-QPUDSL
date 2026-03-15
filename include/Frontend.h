@@ -107,8 +107,10 @@ struct Sum : ExprNode<Sum> {
 
 struct Tensor : ExprNode<Tensor> {
     std::string name;
+    std::vector<SliceRange> slices;  // one per level in type.format.levels order; empty = no slicing
 
     static Expr make(TensorType type, std::string name);
+    static Expr make_sliced(TensorType type, std::string name, std::vector<SliceRange> slices);
 
     static const ExprEnum node_type = ExprEnum::Tensor;
 };
@@ -117,5 +119,9 @@ Expr operator+(Expr a, Expr b);
 Expr operator*(Expr a, Expr b);
 Expr bc(std::string idx, Expr a);
 Expr sum(std::string idx, Expr a);
+
+// Create a sliced view of a tensor.  slices[i] corresponds to type.format.levels[i].
+// full_dim_size in each SliceRange should be set to the corresponding level's full size.
+Expr slice(Expr tensor, std::vector<SliceRange> slices);
 
 } // namespace qpudsl

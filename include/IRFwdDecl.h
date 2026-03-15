@@ -42,6 +42,7 @@ namespace qpudsl {
         struct lStmt;
         struct Mov;
         struct Shl;
+        struct Shr;
         struct Add;
         struct Sub;
         struct Mul;

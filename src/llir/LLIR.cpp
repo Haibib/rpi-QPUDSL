@@ -82,6 +82,21 @@ lStmt Shl::make(lOpr dst, lOpr src0, lOpr src1, FlagsExpr flags) {
     return node;
 } 
 
+lStmt Shr::make(lOpr dst, lOpr src0, lOpr src1, FlagsExpr flags) {
+    internal_assert(dst.defined())
+        << "Cannot make Shr with undefined dst";
+    internal_assert(src0.defined())
+        << "Cannot make Shr with undefined src0";
+    internal_assert(src1.defined())
+        << "Cannot make Shr with undefined src1";
+    Shr *node = new Shr;
+    node->dst   = std::move(dst);
+    node->src   = std::move(src0);
+    node->shift = std::move(src1);
+    node->flags = flags;
+    return node;
+}
+
 lStmt Add::make(lOpr dst, lOpr src0, lOpr src1, FlagsExpr flags) {
     internal_assert(dst.defined())
         << "Cannot make Add with undefined dst";

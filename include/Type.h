@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <cstdint>
 
 namespace qpudsl {
 
@@ -9,6 +10,16 @@ enum class dType{
     INT32,
     FLOAT32,
     TemplateT
+};
+
+// Describes a slice of one tensor dimension.
+//   start         – first element index 
+//   size          – number of elements in the slice 
+//   full_dim_size – total size of the original dimension
+struct SliceRange {
+    int64_t start         = 0;
+    int64_t size          = -1;
+    int64_t full_dim_size = -1;
 };
 
 struct Level {

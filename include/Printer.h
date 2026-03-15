@@ -59,6 +59,7 @@ struct Printer : public Visitor {
     virtual void print(const llir::lStmt &);
     virtual void visit(const llir::Mov *) override;
     virtual void visit(const llir::Shl *) override;
+    virtual void visit(const llir::Shr *) override;
     virtual void visit(const llir::Add *) override;
     virtual void visit(const llir::Sub *) override;
     virtual void visit(const llir::Mul *) override;

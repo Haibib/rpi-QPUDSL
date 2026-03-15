@@ -31,6 +31,7 @@ enum class lOprEnum {
 enum class lStmtEnum {
     Mov,
     Shl,
+    Shr,
     Add,
     Sub,
     Mul,
@@ -44,7 +45,8 @@ enum class lStmtEnum {
 enum class FlagsExpr {
         None,
         SetF,
-        AnyNZ
+        AnyNZ,
+        AllZ
     };
 
 using IRlRegTypeNode = IRNode<lRegType, lRegTypeEnum>;
@@ -234,6 +236,14 @@ struct Shl : lStmtNode<Shl> {
     static lStmt make(lOpr dst, lOpr src, lOpr shift, FlagsExpr flags=FlagsExpr::None);
 
     static const lStmtEnum node_type = lStmtEnum::Shl;
+};
+
+struct Shr : lStmtNode<Shr> {
+    lOpr dst, src, shift;
+
+    static lStmt make(lOpr dst, lOpr src, lOpr shift, FlagsExpr flags=FlagsExpr::None);
+
+    static const lStmtEnum node_type = lStmtEnum::Shr;
 };
 
 struct Add : lStmtNode<Add> {

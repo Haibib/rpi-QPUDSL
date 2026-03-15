@@ -64,6 +64,8 @@ target_sources(
     src/Frontend.cpp
     src/CIN.cpp
     src/CompileToCIN.cpp
+    src/CompileToLLIR.cpp
+    src/llir/LLIR.cpp
 )
 
 target_sources(
@@ -84,6 +86,8 @@ target_sources(
     include/Mutator.h
     include/CIN.h
     include/CompileToCIN.h
+    include/CompileToLLIR.h
+    include/llir/LLIR.h
 )
 
 if (rpi-qpudsl_ENABLE_WARNINGS)

@@ -159,4 +159,25 @@ Expr sum(std::string idx, Expr a) {
     return Sum::make(std::move(idx), std::move(a));
 }
 
+Expr Tensor::make_sliced(TensorType type, std::string name, std::vector<SliceRange> slices) {
+    internal_assert(!name.empty()) << "Cannot make Tensor with empty name.";
+    internal_assert(type.format.bc_levels.empty())
+        << "Tensor cannot be made with a type with unordered levels: " << name;
+    internal_assert(slices.empty() || slices.size() == type.format.levels.size())
+        << "Slice count (" << slices.size() << ") must match level count ("
+        << type.format.levels.size() << ") for tensor: " << name;
+    Tensor *node = new Tensor;
+    node->type   = std::move(type);
+    node->name   = std::move(name);
+    node->slices = std::move(slices);
+    return node;
+}
+
+Expr slice(Expr tensor, std::vector<SliceRange> slices) {
+    internal_assert(tensor.defined()) << "slice() on undefined Tensor";
+    const Tensor *t = tensor.as<Tensor>();
+    internal_assert(t) << "slice() only supported on Tensor leaf nodes";
+    return Tensor::make_sliced(t->type, t->name, std::move(slices));
+}
+
 } // namespace qpudsl

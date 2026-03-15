@@ -35,6 +35,7 @@ struct Visitor {
 
     virtual void visit(const llir::Mov *);
     virtual void visit(const llir::Shl *);
+    virtual void visit(const llir::Shr *);
     virtual void visit(const llir::Add *);
     virtual void visit(const llir::Sub *);
     virtual void visit(const llir::Mul *);
