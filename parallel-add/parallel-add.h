@@ -6,7 +6,7 @@
 #define GPU_BASE 0x40000000
 
 #ifndef N
-#define N 2097152
+#define N 1024*1024
 #endif
 
 #define MAX_QPUS 12

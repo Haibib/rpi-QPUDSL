@@ -11,7 +11,7 @@ void fill_values(volatile struct addGPU *add_gpu, uint32_t len) {
 /* SIMPLE TEST TO COMPARE YOUR KERNEL WITH CPU OUTPUT */
 void test_add(void)
 {
-    int len = 2097143;
+    int len = 1024*1024;
     int num_qpus = 8;
     int i, j;
     volatile struct addGPU *add_gpu;

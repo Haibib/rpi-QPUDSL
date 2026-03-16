@@ -9,7 +9,7 @@ mov   ra4, unif #qpu_num (which qpu core this is)
 mov rb0, 128
 shl rb1, ra4, 2 #Multiply by 4 to get base row y values used to shift VPM start-row for vpm_setup
 shl rb2, ra4, 6 #(4 + 2) add to shift vdr_setup_0 y coordinate by 4 * qpu_num rows
-shl rb3, ra4, 7 #(7 + 2) add to shift vdw_setup_0 y coordinate by 4 * qpu_num rows
+shl rb3, ra4, 9 #(9) add to shift vdw_setup_0 y coordinate by 4 * qpu_num rows (dma_h32 encodes y at bit 7, so 1 unit y = 128; need qpu_num*4*128 = qpu_num<<9)
 
 :loop
         # Load 2 rows from DMA to VPM at y = 0, x = 0
