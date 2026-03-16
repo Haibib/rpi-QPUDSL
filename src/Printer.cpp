@@ -400,7 +400,7 @@ void Printer::visit(const llir::Branch * node) {
     print(node->flags);
     os<<" ";
     print(node->opr);
-    os<<", ";
+    os<<", :";
     os<<(node->label);
     os<<"\n";
 }
