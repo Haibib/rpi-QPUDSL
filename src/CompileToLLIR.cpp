@@ -31,6 +31,7 @@ struct EvalStep {
     OpType      op;
 };
 
+// a+b*c
 void flatten_into(const cExpr &e, std::vector<EvalStep> &steps) {
     if (const cTensor *t = e.as<cTensor>()) {
         steps.push_back({t->name, true, OpType::Add});
@@ -62,8 +63,7 @@ void flatten_into(const cExpr &e, std::vector<EvalStep> &steps) {
 
 
 struct TensorInfo {
-    std::string             name;
-    std::vector<SliceRange> slices;
+    std::string name;
 };
 
 struct KernelInfo {
@@ -97,7 +97,7 @@ KernelInfo analyze(const CIN &cin) {
             }
             for (const auto &ti : tensors)
                 if (ti.name == t->name) return;
-            tensors.push_back({t->name, t->slices});
+            tensors.push_back({t->name});
         }
     };
     InfoCollector col;

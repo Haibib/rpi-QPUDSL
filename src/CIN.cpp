@@ -25,14 +25,13 @@ cExpr cMul::make(cExpr a, cExpr b) {
     return node;
 }
 
-cExpr cTensor::make(TensorType type, std::string name, std::vector<SliceRange> slices) {
+cExpr cTensor::make(TensorType type, std::string name) {
     internal_assert(!name.empty()) << "Cannot make Tensor with empty name.";
     internal_assert(type.format.bc_levels.empty())
         << "Tensor cannot be made with a type with unordered levels: " << name;
     cTensor *node = new cTensor;
     node->type   = std::move(type);
     node->name   = std::move(name);
-    node->slices = std::move(slices);
     return node;
 }
 

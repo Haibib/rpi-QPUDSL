@@ -137,9 +137,8 @@ struct cMul : cExprNode<cMul> {
 struct cTensor : cExprNode<cTensor> {
     TensorType type;
     std::string name;
-    std::vector<SliceRange> slices;
 
-    static cExpr make(TensorType type, std::string name, std::vector<SliceRange> slices = {});
+    static cExpr make(TensorType type, std::string name);
 
     static const cExprEnum node_type = cExprEnum::cTensor;
 };

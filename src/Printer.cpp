@@ -171,30 +171,15 @@ void Printer::visit(const cMul *node) {
 
 void Printer::visit(const cTensor *node) {
     os << node->name;
-    if (!node->slices.empty()) {
+    if (!node->type.format.levels.empty()) {
         os << "[";
-        for (size_t i = 0; i < node->slices.size(); ++i) {
-            const auto &sr = node->slices[i];
-            if (i > 0) os << ", ";
-            if (sr.start == 0 && sr.size == -1) {
-                os << ":";
-            } else {
-                os << sr.start << ":" << (sr.size == -1 ? -1 : sr.start + sr.size);
-            }
+        bool first = true;
+        for (const auto &lvl : node->type.format.levels) {
+            if (!first) os << ", ";
+            first = false;
+            os << lvl.index;
         }
         os << "]";
-    } else {
-        // Print with type format levels as before
-        if (!node->type.format.levels.empty()) {
-            os << "[";
-            bool first = true;
-            for (const auto &lvl : node->type.format.levels) {
-                if (!first) os << ", ";
-                first = false;
-                os << lvl.index;
-            }
-            os << "]";
-        }
     }
 }
 
