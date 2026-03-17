@@ -31,6 +31,10 @@ Expr Mutator::visit(const Sum *node) {
 
 Expr Mutator::visit(const Tensor *node) { return node; }
 
+Expr Mutator::visit(const Sub *node) { return mutate_binop<Expr>(node); }
+
+Expr Mutator::visit(const Scalar *node) { return node; }
+
 
 cExpr Mutator::mutate(const cExpr &cexpr) {
     return cexpr.defined() ? cexpr.get()->mutate_cExpr(this) : cExpr();
@@ -40,7 +44,11 @@ cExpr Mutator::visit(const cAdd *node) { return mutate_binop<cExpr>(node); }
 
 cExpr Mutator::visit(const cMul *node) { return mutate_binop<cExpr>(node); }
 
+cExpr Mutator::visit(const cSub *node) { return mutate_binop<cExpr>(node); }
+
 cExpr Mutator::visit(const cTensor *node) { return node; }
+
+cExpr Mutator::visit(const cScalar *node) { return node; }
 
 CIN Mutator::mutate(const CIN &cin) {
     return cin.defined() ? cin.get()->mutate_CIN(this) : CIN();

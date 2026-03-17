@@ -35,6 +35,9 @@ enum class lStmtEnum {
     Add,
     Sub,
     Mul,
+    FAdd,
+    FSub,
+    FMul,
     Branch,
     Sequence,
     SpecialStmt,
@@ -268,6 +271,30 @@ struct Mul : lStmtNode<Mul> {
     static lStmt make(lOpr dst, lOpr src0, lOpr src1, FlagsExpr flags=FlagsExpr::None);
 
     static const lStmtEnum node_type = lStmtEnum::Mul;
+};
+
+struct FAdd : lStmtNode<FAdd> {
+    lOpr dst, src0, src1;
+
+    static lStmt make(lOpr dst, lOpr src0, lOpr src1, FlagsExpr flags=FlagsExpr::None);
+
+    static const lStmtEnum node_type = lStmtEnum::FAdd;
+};
+
+struct FSub : lStmtNode<FSub> {
+    lOpr dst, src0, src1;
+
+    static lStmt make(lOpr dst, lOpr src0, lOpr src1, FlagsExpr flags=FlagsExpr::None);
+
+    static const lStmtEnum node_type = lStmtEnum::FSub;
+};
+
+struct FMul : lStmtNode<FMul> {
+    lOpr dst, src0, src1;
+
+    static lStmt make(lOpr dst, lOpr src0, lOpr src1, FlagsExpr flags=FlagsExpr::None);
+
+    static const lStmtEnum node_type = lStmtEnum::FMul;
 };
 
 struct Branch : lStmtNode<Branch> {

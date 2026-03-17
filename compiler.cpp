@@ -32,8 +32,14 @@ int main(int argc, char **argv) {
     check("A+B+C+D",    A + B + C + D);
     check("A*(B+C*D)",  A * (B + C * D));
 
+    check("A-B",        A - B);
+    check("A+B-C",      A + B - C);
 
-    // 2-D matrices [R, I]: outermost dim r (rows), innermost dim i (columns)
+    Expr K = Scalar::make("k");
+    check("A+k",        A + K);
+    check("A-k",        A - K);
+    check("A*k",        A * K);
+
     TensorType MatType(Format::ordered({Level{"r"}, Level{"i"}}), dType::INT32);
 
     Expr MA = Tensor::make(MatType, "MA");
@@ -42,14 +48,26 @@ int main(int argc, char **argv) {
 
     check("MA+MB (2D)",     MA + MB);
     check("MA+MB*MC (2D)",  MA + MB * MC);
+    check("MA-MB (2D)",     MA - MB);
 
-    // 3-D tensors [B, R, I]
     TensorType TenType(Format::ordered({Level{"b"}, Level{"r"}, Level{"i"}}), dType::INT32);
 
     Expr TA = Tensor::make(TenType, "TA");
     Expr TB = Tensor::make(TenType, "TB");
 
     check("TA+TB (3D)", TA + TB);
+
+    TensorType FVecType(Format::ordered({Level{"i"}}), dType::FLOAT32);
+    Expr FA = Tensor::make(FVecType, "FA");
+    Expr FB = Tensor::make(FVecType, "FB");
+    Expr FK = Scalar::make("fk", dType::FLOAT32);
+
+    check("FA+FB (float)",        FA + FB);
+    check("FA-FB (float)",        FA - FB);
+    check("FA*FB (float)",        FA * FB);
+    check("FA+fk (float+scalar)", FA + FK);
+    check("FA-fk (float-scalar)", FA - FK);
+    check("FA*fk (float*scalar)", FA * FK);
 
     return 0;
 }

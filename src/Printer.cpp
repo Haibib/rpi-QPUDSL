@@ -142,6 +142,18 @@ void Printer::visit(const Tensor *node) {
     print_tensor(node->name, node->type);
 }
 
+void Printer::visit(const Sub *node) {
+    open();
+    print(node->a);
+    os << " - ";
+    print(node->b);
+    close();
+}
+
+void Printer::visit(const Scalar *node) {
+    os << "scalar(" << node->name << ")";
+}
+
 
 void Printer::print(const cExpr &cexpr) {
     ScopedValue<bool> old(implicit_parens, false);
@@ -167,6 +179,18 @@ void Printer::visit(const cMul *node) {
     os << " * ";
     print(node->b);
     close();
+}
+
+void Printer::visit(const cSub *node) {
+    open();
+    print(node->a);
+    os << " - ";
+    print(node->b);
+    close();
+}
+
+void Printer::visit(const cScalar *node) {
+    os << "scalar(" << node->name << ")";
 }
 
 void Printer::visit(const cTensor *node) {
@@ -369,6 +393,45 @@ void Printer::visit(const llir::Sub* node){
 void Printer::visit(const llir::Mul* node){
     print_indent();
     os<<"mul24";
+    print(node->flags);
+    os<<" ";
+    print(node->dst);
+    os<<", ";
+    print(node->src0);
+    os<<", ";
+    print(node->src1);
+    os<<"\n";
+}
+
+void Printer::visit(const llir::FAdd* node){
+    print_indent();
+    os<<"fadd";
+    print(node->flags);
+    os<<" ";
+    print(node->dst);
+    os<<", ";
+    print(node->src0);
+    os<<", ";
+    print(node->src1);
+    os<<"\n";
+}
+
+void Printer::visit(const llir::FSub* node){
+    print_indent();
+    os<<"fsub";
+    print(node->flags);
+    os<<" ";
+    print(node->dst);
+    os<<", ";
+    print(node->src0);
+    os<<", ";
+    print(node->src1);
+    os<<"\n";
+}
+
+void Printer::visit(const llir::FMul* node){
+    print_indent();
+    os<<"fmul";
     print(node->flags);
     os<<" ";
     print(node->dst);

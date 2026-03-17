@@ -10,14 +10,18 @@ namespace qpudsl {
     struct Add;
     struct Bc;
     struct Mul;
+    struct Sub;
     struct Sum;
     struct Tensor;
+    struct Scalar;
 
 
     struct cExpr;
     struct cAdd;
     struct cMul;
+    struct cSub;
     struct cTensor;
+    struct cScalar;
 
 
     struct CIN;
@@ -46,6 +50,9 @@ namespace qpudsl {
         struct Add;
         struct Sub;
         struct Mul;
+        struct FAdd;
+        struct FSub;
+        struct FMul;
         struct Branch;
         struct Sequence;
         struct Label;

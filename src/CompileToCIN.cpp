@@ -40,8 +40,14 @@ struct Converter : public Visitor {
 
     void visit(const Mul *node) { visit_binop<cMul>(node); }
 
+    void visit(const Sub *node) { visit_binop<cSub>(node); }
+
     void visit(const Tensor *node) {
         cexpr = cTensor::make(node->type, node->name);
+    }
+
+    void visit(const Scalar *node) {
+        cexpr = cScalar::make(node->name);
     }
 };
 

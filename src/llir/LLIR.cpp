@@ -143,6 +143,33 @@ lStmt Mul::make(lOpr dst, lOpr src0, lOpr src1, FlagsExpr flags) {
 }
 
 
+lStmt FAdd::make(lOpr dst, lOpr src0, lOpr src1, FlagsExpr flags) {
+    FAdd *node = new FAdd;
+    node->dst = std::move(dst);
+    node->src0 = std::move(src0);
+    node->src1 = std::move(src1);
+    node->flags = flags;
+    return node;
+}
+
+lStmt FSub::make(lOpr dst, lOpr src0, lOpr src1, FlagsExpr flags) {
+    FSub *node = new FSub;
+    node->dst = std::move(dst);
+    node->src0 = std::move(src0);
+    node->src1 = std::move(src1);
+    node->flags = flags;
+    return node;
+}
+
+lStmt FMul::make(lOpr dst, lOpr src0, lOpr src1, FlagsExpr flags) {
+    FMul *node = new FMul;
+    node->dst = std::move(dst);
+    node->src0 = std::move(src0);
+    node->src1 = std::move(src1);
+    node->flags = flags;
+    return node;
+}
+
 lStmt Branch::make(lOpr opr, std::string label, FlagsExpr flags) {
     internal_assert(!label.empty())
         << "Cannot make Branch with empty label";

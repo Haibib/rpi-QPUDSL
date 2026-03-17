@@ -66,6 +66,7 @@ target_sources(
     src/CompileToCIN.cpp
     src/CompileToLLIR.cpp
     src/llir/LLIR.cpp
+    src/Parser.cpp
 )
 
 target_sources(
@@ -88,6 +89,7 @@ target_sources(
     include/CompileToCIN.h
     include/CompileToLLIR.h
     include/llir/LLIR.h
+    include/Parser.h
 )
 
 if (rpi-qpudsl_ENABLE_WARNINGS)
@@ -115,6 +117,20 @@ set_target_properties(
 )
 
 target_link_libraries(rpi-qpudsl_compiler PRIVATE rpi-qpudsl::library)
+
+##
+# rpi-qpudsl dsl
+
+add_executable(rpi-qpudsl_dsl dsl_main.cpp)
+add_executable(rpi-qpudsl::dsl ALIAS rpi-qpudsl_dsl)
+set_target_properties(
+    rpi-qpudsl_dsl
+    PROPERTIES
+    EXPORT_NAME dsl
+    OUTPUT_NAME dsl
+)
+
+target_link_libraries(rpi-qpudsl_dsl PRIVATE rpi-qpudsl::library)
 
 ##
 # Testing

@@ -17,7 +17,9 @@ struct cExpr;
 enum class cExprEnum {
     cAdd,
     cMul,
+    cSub,
     cTensor,
+    cScalar,
 };
 
 // Concrete Index Notation
@@ -134,6 +136,14 @@ struct cMul : cExprNode<cMul> {
     static const cExprEnum node_type = cExprEnum::cMul;
 };
 
+struct cSub : cExprNode<cSub> {
+    cExpr a, b;
+
+    static cExpr make(cExpr a, cExpr b);
+
+    static const cExprEnum node_type = cExprEnum::cSub;
+};
+
 struct cTensor : cExprNode<cTensor> {
     TensorType type;
     std::string name;
@@ -141,6 +151,14 @@ struct cTensor : cExprNode<cTensor> {
     static cExpr make(TensorType type, std::string name);
 
     static const cExprEnum node_type = cExprEnum::cTensor;
+};
+
+struct cScalar : cExprNode<cScalar> {
+    std::string name;
+
+    static cExpr make(std::string name);
+
+    static const cExprEnum node_type = cExprEnum::cScalar;
 };
 
 // Concrete Index Notation

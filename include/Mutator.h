@@ -11,13 +11,17 @@ struct Mutator {
     virtual Expr visit(const Add *);
     virtual Expr visit(const Bc *);
     virtual Expr visit(const Mul *);
+    virtual Expr visit(const Sub *);
     virtual Expr visit(const Sum *);
     virtual Expr visit(const Tensor *);
+    virtual Expr visit(const Scalar *);
 
     cExpr mutate(const cExpr &);
     virtual cExpr visit(const cAdd *);
     virtual cExpr visit(const cMul *);
+    virtual cExpr visit(const cSub *);
     virtual cExpr visit(const cTensor *);
+    virtual cExpr visit(const cScalar *);
 
     CIN mutate(const CIN &);
     virtual CIN visit(const Accumulate *);

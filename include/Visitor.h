@@ -9,13 +9,17 @@ struct Visitor {
     virtual void visit(const Add *);
     virtual void visit(const Bc *);
     virtual void visit(const Mul *);
+    virtual void visit(const Sub *);
     virtual void visit(const Sum *);
     virtual void visit(const Tensor *);
+    virtual void visit(const Scalar *);
 
      // cExpr
     virtual void visit(const cAdd *);
     virtual void visit(const cMul *);
+    virtual void visit(const cSub *);
     virtual void visit(const cTensor *);
+    virtual void visit(const cScalar *);
 
     // CIN
     virtual void visit(const Accumulate *);
@@ -39,6 +43,9 @@ struct Visitor {
     virtual void visit(const llir::Add *);
     virtual void visit(const llir::Sub *);
     virtual void visit(const llir::Mul *);
+    virtual void visit(const llir::FAdd *);
+    virtual void visit(const llir::FSub *);
+    virtual void visit(const llir::FMul *);
     virtual void visit(const llir::Branch *);
     virtual void visit(const llir::Sequence *);
     virtual void visit(const llir::SpecialStmt *);

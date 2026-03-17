@@ -25,6 +25,22 @@ cExpr cMul::make(cExpr a, cExpr b) {
     return node;
 }
 
+cExpr cSub::make(cExpr a, cExpr b) {
+    internal_assert(a.defined() && b.defined())
+        << "Sub of undefined: " << a << " - " << b;
+    cSub *node = new cSub;
+    node->a = std::move(a);
+    node->b = std::move(b);
+    return node;
+}
+
+cExpr cScalar::make(std::string name) {
+    internal_assert(!name.empty()) << "Cannot make cScalar with empty name.";
+    cScalar *node = new cScalar;
+    node->name = std::move(name);
+    return node;
+}
+
 cExpr cTensor::make(TensorType type, std::string name) {
     internal_assert(!name.empty()) << "Cannot make Tensor with empty name.";
     internal_assert(type.format.bc_levels.empty())

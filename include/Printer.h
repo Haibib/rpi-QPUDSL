@@ -28,15 +28,19 @@ struct Printer : public Visitor {
     virtual void visit(const Add *) override;
     virtual void visit(const Bc *) override;
     virtual void visit(const Mul *) override;
+    virtual void visit(const Sub *) override;
     virtual void visit(const Sum *) override;
     virtual void print_tensor(const std::string &name, const TensorType &type);
     virtual void visit(const Tensor *) override;
+    virtual void visit(const Scalar *) override;
 
     virtual void print(const cExpr &);
     virtual void print_no_parens(const cExpr &);
     virtual void visit(const cAdd *) override;
     virtual void visit(const cMul *) override;
+    virtual void visit(const cSub *) override;
     virtual void visit(const cTensor *) override;
+    virtual void visit(const cScalar *) override;
 
     virtual void print(const CIN &);
     virtual void visit(const Accumulate *) override;
@@ -63,6 +67,9 @@ struct Printer : public Visitor {
     virtual void visit(const llir::Add *) override;
     virtual void visit(const llir::Sub *) override;
     virtual void visit(const llir::Mul *) override;
+    virtual void visit(const llir::FAdd *) override;
+    virtual void visit(const llir::FSub *) override;
+    virtual void visit(const llir::FMul *) override;
     virtual void visit(const llir::Branch *) override;
     virtual void visit(const llir::Sequence *) override;
     virtual void visit(const llir::SpecialStmt *) override;

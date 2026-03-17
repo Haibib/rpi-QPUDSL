@@ -16,8 +16,10 @@ enum class ExprEnum {
     Add,
     Bc,
     Mul,
+    Sub,
     Sum,
     Tensor,
+    Scalar,
 };
 
 using IRExprNode = IRNode<Expr, ExprEnum>;
@@ -113,7 +115,24 @@ struct Tensor : ExprNode<Tensor> {
     static const ExprEnum node_type = ExprEnum::Tensor;
 };
 
+struct Sub : ExprNode<Sub> {
+    Expr a, b;
+
+    static Expr make(Expr a, Expr b);
+
+    static const ExprEnum node_type = ExprEnum::Sub;
+};
+
+struct Scalar : ExprNode<Scalar> {
+    std::string name;
+
+    static Expr make(std::string name, dType dtype = dType::INT32);
+
+    static const ExprEnum node_type = ExprEnum::Scalar;
+};
+
 Expr operator+(Expr a, Expr b);
+Expr operator-(Expr a, Expr b);
 Expr operator*(Expr a, Expr b);
 Expr bc(std::string idx, Expr a);
 Expr sum(std::string idx, Expr a);

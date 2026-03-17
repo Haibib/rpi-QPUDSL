@@ -147,7 +147,31 @@ Expr Tensor::make(TensorType type, std::string name) {
     return node;
 }
 
+Expr Sub::make(Expr a, Expr b) {
+    internal_assert(a.defined() && b.defined())
+        << "Sub of undefined: " << a << " - " << b;
+    internal_assert(compatible_and_broadcast(a, b))
+        << "Incompatible types being subtracted";
+
+    Sub *node = new Sub;
+    auto format = make_format(a.type().format, b.type().format);
+    node->type = TensorType(std::move(format), a.type().dtype);
+    node->a = std::move(a);
+    node->b = std::move(b);
+    return node;
+}
+
+Expr Scalar::make(std::string name, dType dtype) {
+    internal_assert(!name.empty()) << "Cannot make Scalar with empty name.";
+    Scalar *node = new Scalar;
+    node->type = TensorType(Format::ordered({}), dtype);
+    node->name = std::move(name);
+    return node;
+}
+
 Expr operator+(Expr a, Expr b) { return Add::make(std::move(a), std::move(b)); }
+
+Expr operator-(Expr a, Expr b) { return Sub::make(std::move(a), std::move(b)); }
 
 Expr operator*(Expr a, Expr b) { return Mul::make(std::move(a), std::move(b)); }
 

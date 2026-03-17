@@ -23,38 +23,49 @@ static llir::lOpr mac(std::string s) { return llir::Macro::make(std::move(s)); }
 static llir::lStmt nop()          { return llir::SpecialStmt::make(llir::SpecialStmt::NOP); }
 
 
-enum class OpType { Add, Mul };
+enum class OpType { Add, Sub, Mul };
 
 struct EvalStep {
-    std::string tensor;
+    std::string tensor;    // tensor or scalar name
     bool        is_init;
+    bool        is_scalar;
     OpType      op;
 };
 
-// a+b*c
+static bool is_leaf(const cExpr &e) {
+    return e.as<cTensor>() || e.as<cScalar>();
+}
+static std::string leaf_name(const cExpr &e) {
+    if (auto t = e.as<cTensor>()) return t->name;
+    if (auto s = e.as<cScalar>()) return s->name;
+    return "";
+}
+static bool leaf_is_scalar(const cExpr &e) { return e.as<cScalar>() != nullptr; }
+
 void flatten_into(const cExpr &e, std::vector<EvalStep> &steps) {
-    if (const cTensor *t = e.as<cTensor>()) {
-        steps.push_back({t->name, true, OpType::Add});
+    if (is_leaf(e)) {
+        steps.push_back({leaf_name(e), true, leaf_is_scalar(e), OpType::Add});
         return;
     }
     OpType op;
     const cExpr *lhs = nullptr, *rhs = nullptr;
     if (const cAdd *a = e.as<cAdd>())      { op = OpType::Add; lhs = &a->a; rhs = &a->b; }
     else if (const cMul *m = e.as<cMul>()) { op = OpType::Mul; lhs = &m->a; rhs = &m->b; }
+    else if (const cSub *s = e.as<cSub>()) { op = OpType::Sub; lhs = &s->a; rhs = &s->b; }
     else internal_assert(false) << "Unknown cExpr node";
 
-    const bool lhs_leaf = (lhs->as<cTensor>() != nullptr);
-    const bool rhs_leaf = (rhs->as<cTensor>() != nullptr);
+    const bool lhs_leaf = is_leaf(*lhs);
+    const bool rhs_leaf = is_leaf(*rhs);
 
     if (lhs_leaf && rhs_leaf) {
-        steps.push_back({lhs->as<cTensor>()->name, true,  OpType::Add});
-        steps.push_back({rhs->as<cTensor>()->name, false, op});
+        steps.push_back({leaf_name(*lhs), true,  leaf_is_scalar(*lhs), OpType::Add});
+        steps.push_back({leaf_name(*rhs), false, leaf_is_scalar(*rhs), op});
     } else if (!lhs_leaf && rhs_leaf) {
         flatten_into(*lhs, steps);
-        steps.push_back({rhs->as<cTensor>()->name, false, op});
+        steps.push_back({leaf_name(*rhs), false, leaf_is_scalar(*rhs), op});
     } else if (lhs_leaf && !rhs_leaf) {
         flatten_into(*rhs, steps);
-        steps.push_back({lhs->as<cTensor>()->name, false, op});
+        steps.push_back({leaf_name(*lhs), false, leaf_is_scalar(*lhs), op});
     } else {
         internal_assert(false)
             << "non-linear expression trees require multiple accumulators (not yet supported).";
@@ -67,10 +78,12 @@ struct TensorInfo {
 };
 
 struct KernelInfo {
-    std::vector<EvalStep>   steps;
-    std::vector<TensorInfo> tensors;   // input tensors, unique, in eval order
-    std::string             out_tensor;
-    int                     D;         // number of dimensions
+    std::vector<EvalStep>    steps;
+    std::vector<TensorInfo>  tensors;    // input tensors in eval order
+    std::vector<std::string> scalars;    
+    std::string              out_tensor;
+    int                      D;          // number of dimensions
+    dType                    dtype;      
 };
 
 KernelInfo analyze(const CIN &cin) {
@@ -78,16 +91,15 @@ KernelInfo analyze(const CIN &cin) {
     while (const Forall *f = body.as<Forall>()) { body = f->body; }
 
     const Assign *assign = body.as<Assign>();
-    internal_assert(assign)
-        << "expected Assign Stmt.";
+    internal_assert(assign) << "expected Assign Stmt.";
 
     std::vector<EvalStep> steps;
     flatten_into(assign->expr, steps);
     internal_assert(!steps.empty()) << "empty expression.";
 
-    // Collect unique tensors in eval order.
     struct InfoCollector : public Visitor {
-        std::vector<TensorInfo> tensors;
+        std::vector<TensorInfo>  tensors;
+        std::vector<std::string> scalars;
         int D = 0;
         bool found_D = false;
         void visit(const cTensor *t) override {
@@ -99,6 +111,10 @@ KernelInfo analyze(const CIN &cin) {
                 if (ti.name == t->name) return;
             tensors.push_back({t->name});
         }
+        void visit(const cScalar *s) override {
+            for (const auto &sn : scalars) if (sn == s->name) return;
+            scalars.push_back(s->name);
+        }
     };
     InfoCollector col;
     assign->expr.accept(&col);
@@ -108,6 +124,7 @@ KernelInfo analyze(const CIN &cin) {
     // Re-order tensors to match eval step order.
     std::vector<TensorInfo> ordered;
     for (const auto &st : steps) {
+        if (st.is_scalar) continue;
         for (const auto &ti : col.tensors) {
             if (ti.name != st.tensor) continue;
             bool dup = false;
@@ -117,12 +134,8 @@ KernelInfo analyze(const CIN &cin) {
         }
     }
 
-
-
-    int D  = col.D;
-    int NL = std::max(D - 1, 1);
-
-    return KernelInfo{std::move(steps), std::move(ordered), assign->tensor, D};
+    return KernelInfo{std::move(steps), std::move(ordered), std::move(col.scalars),
+                      assign->tensor, col.D, assign->type.dtype};
 }
 
 
@@ -148,6 +161,7 @@ static void emit_dma_load(std::vector<llir::lStmt> &s,
 
 static int N_tensors;   // number of input tensors
 static int D_dims;      // number of format dimensions
+static int N_scalars;   // number of scalar uniforms
 
 static llir::lOpr get_ptr_reg(int i)        { return ra(i < N_tensors ? i : N_tensors); }
 static llir::lOpr get_out_ptr_reg()         { return ra(N_tensors); }
@@ -155,6 +169,7 @@ static llir::lOpr slice_start(int i, int d) { return ra(N_tensors + 1 + (i * D_d
 static llir::lOpr out_slice_start(int d)    { return ra(N_tensors + 1 + (N_tensors * D_dims) + d); }
 static llir::lOpr stride_sizes(int d)       { return ra(N_tensors + 1 + (N_tensors + 1) * D_dims + d); }
 static llir::lOpr num_iterations(int d)     { return ra(N_tensors + 1 + (N_tensors + 1) * D_dims + D_dims + d); }
+static llir::lOpr scalar_reg(int s)         { return ra(N_tensors + 1 + (N_tensors + 1) * D_dims + 2 * D_dims + s); }
 //  rb(1)=qpu<<2 (vpm_setup y: qpu*4), rb(2)=qpu<<6 (vdr_setup_0 y: qpu*4), rb(3)=qpu<<9 (vdw_setup_0 y: qpu*4)
 static llir::lOpr loop_counters(int d) { return rb(4+d);}
 static llir::lOpr curr_ptr_reg(int i) { return rb(4 + D_dims + i); }
@@ -162,8 +177,9 @@ static llir::lOpr curr_ptr_reg(int i) { return rb(4 + D_dims + i); }
 
 static void emit_preamble(std::vector<llir::lStmt> &s)
 {
-    // ra layout: [in_ptrs(N)] [out_ptr] [in_slice_starts(N*D)] [out_slice_starts(D)] [stride_sizes(D)] [num_iters(D)]
-    internal_assert(N_tensors + 1 + (N_tensors + 1)*D_dims + 2*D_dims - 1 < 32) << "Register alloc is invalid";
+    // ra layout: [in_ptrs(N)] [out_ptr] [in_slice_starts(N*D)] [out_slice_starts(D)]
+    //            [stride_sizes(D)] [num_iters(D)] [scalars(S)]
+    internal_assert(N_tensors + 1 + (N_tensors + 1)*D_dims + 2*D_dims + N_scalars - 1 < 32) << "Register alloc is invalid";
 
     // pointer to tensor start memory
     for (int i = 0; i < N_tensors; ++i)
@@ -184,10 +200,14 @@ static void emit_preamble(std::vector<llir::lStmt> &s)
     for(int i=0;i<D_dims;++i)
         s.push_back(llir::Mov::make(rb(i+D_dims), mac("unif")));
 
+    // Scalar values
+    for (int ss = 0; ss < N_scalars; ++ss)
+        s.push_back(llir::Mov::make(scalar_reg(ss), mac("unif")));
+
     // qpu_num
     s.push_back(llir::Mov::make(r(1), mac("unif")));
 
-    // QPU distribution: each QPU q handles a contiguous block of the outermost dim.
+    //  each QPU q handles a contiguous block of the outermost dim.
     // D==1: outermost==innermost; loop iterates in tile units (16 elements each).
     //   Distribute tile_count = sz/16 among 8 QPUs; slice_start offset = t_q * 16 elements.
     // D>=2: outermost is the row dimension; distribute row count = sz among 8 QPUs.
@@ -275,8 +295,9 @@ static void emit_preamble(std::vector<llir::lStmt> &s)
 
 
 llir::lStmt build_kernel(const KernelInfo &info) {
-    N_tensors  = (int)info.tensors.size();
-    D_dims  = info.D;
+    N_tensors = (int)info.tensors.size();
+    D_dims    = info.D;
+    N_scalars = (int)info.scalars.size();
 
 
     std::vector<llir::lStmt> s;   
@@ -285,11 +306,31 @@ llir::lStmt build_kernel(const KernelInfo &info) {
 
     emit_preamble(s);
 
+    // Float-aware arithmetic helpers
+    dType dtype = info.dtype;
+    auto arith_add = [&](llir::lOpr d, llir::lOpr a, llir::lOpr b) -> llir::lStmt {
+        return dtype == dType::FLOAT32 ? llir::FAdd::make(d,a,b) : llir::Add::make(d,a,b);
+    };
+    auto arith_sub = [&](llir::lOpr d, llir::lOpr a, llir::lOpr b) -> llir::lStmt {
+        return dtype == dType::FLOAT32 ? llir::FSub::make(d,a,b) : llir::Sub::make(d,a,b);
+    };
+    auto arith_mul = [&](llir::lOpr d, llir::lOpr a, llir::lOpr b) -> llir::lStmt {
+        return dtype == dType::FLOAT32 ? llir::FMul::make(d,a,b) : llir::Mul::make(d,a,b);
+    };
+
     // Tensor-index lookup helper
     auto tensor_idx = [&](const std::string &name) -> int {
         for (int i = 0; i < N_tensors; ++i)
             if (info.tensors[i].name == name) return i;
         internal_assert(false) << "tensor not found: " << name;
+        return -1;
+    };
+
+    // Scalar-index lookup helper
+    auto scalar_idx = [&](const std::string &name) -> int {
+        for (int si = 0; si < N_scalars; ++si)
+            if (info.scalars[si] == name) return si;
+        internal_assert(false) << "scalar not found: " << name;
         return -1;
     };
 
@@ -316,17 +357,33 @@ llir::lStmt build_kernel(const KernelInfo &info) {
     std::function<void(int)> lower_loop = [&](int d) {
 
         if (d < 0) {
-            // Innermost body: DMA-load all tensors, accumulate, write output.
+            // Innermost body: DMA-load tensors / use scalar regs, accumulate, write output.
             for (const EvalStep &step : info.steps) {
-                int ti = tensor_idx(step.tensor);
-                if (step.is_init) {
-                    emit_dma_load(s, curr_ptr_reg(ti), rb(2), rb(1), r(0));
+                if (step.is_scalar) {
+                    int si = scalar_idx(step.tensor);
+                    llir::lOpr src = scalar_reg(si);
+                    if (step.is_init) {
+                        s.push_back(llir::Mov::make(r(0), src));
+                    } else if (step.op == OpType::Add) {
+                        s.push_back(arith_add(r(0), r(0), src));
+                    } else if (step.op == OpType::Sub) {
+                        s.push_back(arith_sub(r(0), r(0), src));
+                    } else {
+                        s.push_back(arith_mul(r(0), r(0), src));
+                    }
                 } else {
-                    emit_dma_load(s, curr_ptr_reg(ti), rb(2), rb(1), r(2));
-                    if (step.op == OpType::Add)
-                        s.push_back(llir::Add::make(r(0), r(0), r(2)));
-                    else
-                        s.push_back(llir::Mul::make(r(0), r(0), r(2)));
+                    int ti = tensor_idx(step.tensor);
+                    if (step.is_init) {
+                        emit_dma_load(s, curr_ptr_reg(ti), rb(2), rb(1), r(0));
+                    } else {
+                        emit_dma_load(s, curr_ptr_reg(ti), rb(2), rb(1), r(2));
+                        if (step.op == OpType::Add)
+                            s.push_back(arith_add(r(0), r(0), r(2)));
+                        else if (step.op == OpType::Sub)
+                            s.push_back(arith_sub(r(0), r(0), r(2)));
+                        else
+                            s.push_back(arith_mul(r(0), r(0), r(2)));
+                    }
                 }
             }
 

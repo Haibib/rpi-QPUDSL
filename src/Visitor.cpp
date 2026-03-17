@@ -21,6 +21,13 @@ void Visitor::visit(const Sum *node) { node->a.accept(this); }
 
 void Visitor::visit(const Tensor *node) { (void)node; }
 
+void Visitor::visit(const Sub *node) {
+    node->a.accept(this);
+    node->b.accept(this);
+}
+
+void Visitor::visit(const Scalar *node) { (void)node; }
+
 void Visitor::visit(const cAdd *node) {
     node->a.accept(this);
     node->b.accept(this);
@@ -31,7 +38,14 @@ void Visitor::visit(const cMul *node) {
     node->b.accept(this);
 }
 
+void Visitor::visit(const cSub *node) {
+    node->a.accept(this);
+    node->b.accept(this);
+}
+
 void Visitor::visit(const cTensor *node) { (void)node; }
+
+void Visitor::visit(const cScalar *node) { (void)node; }
 
 void Visitor::visit(const Accumulate *node) { node->expr.accept(this); }
 
@@ -88,6 +102,24 @@ void Visitor::visit(const llir::Sub *node) {
 }
 
 void Visitor::visit(const llir::Mul *node) {
+    node->dst.accept(this);
+    node->src0.accept(this);
+    node->src1.accept(this);
+}
+
+void Visitor::visit(const llir::FAdd *node) {
+    node->dst.accept(this);
+    node->src0.accept(this);
+    node->src1.accept(this);
+}
+
+void Visitor::visit(const llir::FSub *node) {
+    node->dst.accept(this);
+    node->src0.accept(this);
+    node->src1.accept(this);
+}
+
+void Visitor::visit(const llir::FMul *node) {
     node->dst.accept(this);
     node->src0.accept(this);
     node->src1.accept(this);
