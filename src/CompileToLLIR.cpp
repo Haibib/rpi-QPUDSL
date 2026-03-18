@@ -23,15 +23,6 @@ static llir::lOpr mac(std::string s) { return llir::Macro::make(std::move(s)); }
 static llir::lStmt nop()          { return llir::SpecialStmt::make(llir::SpecialStmt::NOP); }
 
 
-enum class OpType { Add, Sub, Mul };
-
-struct EvalStep {
-    std::string tensor;    // tensor or scalar name
-    bool        is_init;
-    bool        is_scalar;
-    OpType      op;
-};
-
 static bool is_leaf(const cExpr &e) {
     return e.as<cTensor>() || e.as<cScalar>();
 }
@@ -70,72 +61,6 @@ void flatten_into(const cExpr &e, std::vector<EvalStep> &steps) {
         internal_assert(false)
             << "non-linear expression trees require multiple accumulators (not yet supported).";
     }
-}
-
-
-struct TensorInfo {
-    std::string name;
-};
-
-struct KernelInfo {
-    std::vector<EvalStep>    steps;
-    std::vector<TensorInfo>  tensors;    // input tensors in eval order
-    std::vector<std::string> scalars;    
-    std::string              out_tensor;
-    int                      D;          // number of dimensions
-    dType                    dtype;      
-};
-
-KernelInfo analyze(const CIN &cin) {
-    CIN body = cin;
-    while (const Forall *f = body.as<Forall>()) { body = f->body; }
-
-    const Assign *assign = body.as<Assign>();
-    internal_assert(assign) << "expected Assign Stmt.";
-
-    std::vector<EvalStep> steps;
-    flatten_into(assign->expr, steps);
-    internal_assert(!steps.empty()) << "empty expression.";
-
-    struct InfoCollector : public Visitor {
-        std::vector<TensorInfo>  tensors;
-        std::vector<std::string> scalars;
-        int D = 0;
-        bool found_D = false;
-        void visit(const cTensor *t) override {
-            if (!found_D) {
-                D = (int)t->type.format.levels.size();
-                found_D = true;
-            }
-            for (const auto &ti : tensors)
-                if (ti.name == t->name) return;
-            tensors.push_back({t->name});
-        }
-        void visit(const cScalar *s) override {
-            for (const auto &sn : scalars) if (sn == s->name) return;
-            scalars.push_back(s->name);
-        }
-    };
-    InfoCollector col;
-    assign->expr.accept(&col);
-
-    internal_assert(col.found_D) << "no Tensor in expression.";
-
-    // Re-order tensors to match eval step order.
-    std::vector<TensorInfo> ordered;
-    for (const auto &st : steps) {
-        if (st.is_scalar) continue;
-        for (const auto &ti : col.tensors) {
-            if (ti.name != st.tensor) continue;
-            bool dup = false;
-            for (const auto &ot : ordered) if (ot.name == ti.name) { dup = true; break; }
-            if (!dup) ordered.push_back(ti);
-            break;
-        }
-    }
-
-    return KernelInfo{std::move(steps), std::move(ordered), std::move(col.scalars),
-                      assign->tensor, col.D, assign->type.dtype};
 }
 
 
@@ -306,7 +231,6 @@ llir::lStmt build_kernel(const KernelInfo &info) {
 
     emit_preamble(s);
 
-    // Float-aware arithmetic helpers
     dType dtype = info.dtype;
     auto arith_add = [&](llir::lOpr d, llir::lOpr a, llir::lOpr b) -> llir::lStmt {
         return dtype == dType::FLOAT32 ? llir::FAdd::make(d,a,b) : llir::Add::make(d,a,b);
@@ -318,7 +242,6 @@ llir::lStmt build_kernel(const KernelInfo &info) {
         return dtype == dType::FLOAT32 ? llir::FMul::make(d,a,b) : llir::Mul::make(d,a,b);
     };
 
-    // Tensor-index lookup helper
     auto tensor_idx = [&](const std::string &name) -> int {
         for (int i = 0; i < N_tensors; ++i)
             if (info.tensors[i].name == name) return i;
@@ -326,7 +249,6 @@ llir::lStmt build_kernel(const KernelInfo &info) {
         return -1;
     };
 
-    // Scalar-index lookup helper
     auto scalar_idx = [&](const std::string &name) -> int {
         for (int si = 0; si < N_scalars; ++si)
             if (info.scalars[si] == name) return si;
@@ -357,7 +279,7 @@ llir::lStmt build_kernel(const KernelInfo &info) {
     std::function<void(int)> lower_loop = [&](int d) {
 
         if (d < 0) {
-            // Innermost body: DMA-load tensors / use scalar regs, accumulate, write output.
+            // Innermost body: DMA-load tensors, accumulate, write output.
             for (const EvalStep &step : info.steps) {
                 if (step.is_scalar) {
                     int si = scalar_idx(step.tensor);
@@ -452,11 +374,61 @@ llir::lStmt build_kernel(const KernelInfo &info) {
     return llir::Sequence::make(std::move(s));
 }
 
-} 
+} // anonymous namespace
+
+KernelInfo analyze_kernel(const CIN &cin) {
+    CIN body = cin;
+    while (const Forall *f = body.as<Forall>()) { body = f->body; }
+
+    const Assign *assign = body.as<Assign>();
+    internal_assert(assign) << "expected Assign Stmt.";
+
+    std::vector<EvalStep> steps;
+    flatten_into(assign->expr, steps);
+    internal_assert(!steps.empty()) << "empty expression.";
+
+    struct InfoCollector : public Visitor {
+        std::vector<TensorInfo>  tensors;
+        std::vector<std::string> scalars;
+        int D = 0;
+        bool found_D = false;
+        void visit(const cTensor *t) override {
+            if (!found_D) {
+                D = (int)t->type.format.levels.size();
+                found_D = true;
+            }
+            for (const auto &ti : tensors)
+                if (ti.name == t->name) return;
+            tensors.push_back({t->name});
+        }
+        void visit(const cScalar *s) override {
+            for (const auto &sn : scalars) if (sn == s->name) return;
+            scalars.push_back(s->name);
+        }
+    };
+    InfoCollector col;
+    assign->expr.accept(&col);
+
+    internal_assert(col.found_D) << "no Tensor in expression.";
+
+    std::vector<TensorInfo> ordered;
+    for (const auto &st : steps) {
+        if (st.is_scalar) continue;
+        for (const auto &ti : col.tensors) {
+            if (ti.name != st.tensor) continue;
+            bool dup = false;
+            for (const auto &ot : ordered) if (ot.name == ti.name) { dup = true; break; }
+            if (!dup) ordered.push_back(ti);
+            break;
+        }
+    }
+
+    return KernelInfo{std::move(steps), std::move(ordered), std::move(col.scalars),
+                      assign->tensor, col.D, assign->type.dtype};
+}
 
 llir::lStmt compile_to_llir(const CIN &cin) {
-    KernelInfo info = analyze(cin);
-    return build_kernel(info);
+    return build_kernel(analyze_kernel(cin));
 }
 
 } // namespace qpudsl

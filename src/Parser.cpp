@@ -111,8 +111,8 @@ struct Parser {
     std::vector<ParsedTensorDecl>             tensors;
     std::vector<ParsedScalarDecl>             scalars;
     std::vector<ParsedSliceRef>               slice_refs;
-    std::map<std::string, ParsedTensorDecl *> tensor_map;
-    std::map<std::string, ParsedScalarDecl *> scalar_map;
+    std::map<std::string, int> tensor_map; 
+    std::map<std::string, int> scalar_map; 
     std::map<std::string, int>                ref_count; 
 
 
@@ -169,8 +169,8 @@ struct Parser {
         if (decl.dims.empty())
             throw std::runtime_error("line " + std::to_string(line) +
                                      ": makeTensor requires at least one dimension");
+        tensor_map[name] = (int)tensors.size();
         tensors.push_back(std::move(decl));
-        tensor_map[name] = &tensors.back();
     }
 
     // Parse makeScalar(value, [dtype])
@@ -185,8 +185,8 @@ struct Parser {
                 decl.dtype = string_to_dtype(consume().text, line);
         }
         expect(TK::RPAREN, ")");
+        scalar_map[name] = (int)scalars.size();
         scalars.push_back(std::move(decl));
-        scalar_map[name] = &scalars.back();
     }
 
     // Parse a declaration: Identifier = Identifier
@@ -225,8 +225,8 @@ struct Parser {
         const std::string &name = t.text;
 
         if (tensor_map.count(name)) {
-            ParsedTensorDecl *decl = tensor_map[name];
-            int N = (int)decl->dims.size();
+            ParsedTensorDecl &decl = tensors[tensor_map[name]];
+            int N = (int)decl.dims.size();
 
             // Parse slice list
             std::vector<std::pair<int64_t,int64_t>> slices;
@@ -236,28 +236,25 @@ struct Parser {
                     slices.push_back(parse_slicedim());
                 expect(TK::RBRACKET, "]");
             }
-            // Pad to N dims with full-range (0,-1)
             while ((int)slices.size() < N)
                 slices.push_back({0, -1});
 
-            // Generate unique name
             int idx = ref_count[name]++;
             std::string gen = name + "_" + std::to_string(idx);
 
-            // Build TensorType with ordered levels d0..d(N-1)
             std::vector<Level> levels;
             levels.reserve(N);
             for (int d = 0; d < N; ++d)
                 levels.push_back(Level{"d" + std::to_string(d)});
-            TensorType tt(Format::ordered(std::move(levels)), decl->dtype);
+            TensorType tt(Format::ordered(std::move(levels)), decl.dtype);
 
             slice_refs.push_back({name, gen, slices});
             return Tensor::make(tt, gen);
         }
 
         if (scalar_map.count(name)) {
-            ParsedScalarDecl *decl = scalar_map[name];
-            return Scalar::make(name, decl->dtype);
+            ParsedScalarDecl &decl = scalars[scalar_map[name]];
+            return Scalar::make(name, decl.dtype);
         }
 
         throw std::runtime_error("line " + std::to_string(t.line) +
