@@ -65,6 +65,7 @@ target_sources(
     src/CIN.cpp
     src/CompileToCIN.cpp
     src/CompileToLLIR.cpp
+    src/CodeGen.cpp
     src/llir/LLIR.cpp
     src/Parser.cpp
 )
@@ -88,6 +89,7 @@ target_sources(
     include/CIN.h
     include/CompileToCIN.h
     include/CompileToLLIR.h
+    include/CodeGen.h
     include/llir/LLIR.h
     include/Parser.h
 )

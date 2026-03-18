@@ -30,10 +30,12 @@ struct ParsedSliceRef {
 };
 
 struct ParsedProgram {
-    std::vector<ParsedTensorDecl> tensors;
-    std::vector<ParsedScalarDecl> scalars;
-    std::vector<ParsedSliceRef>   slice_refs; 
-    Expr                          expr;
+    std::vector<ParsedTensorDecl>           tensors;
+    std::vector<ParsedScalarDecl>           scalars;
+    std::vector<ParsedSliceRef>             slice_refs;
+    std::string                             out_name;    
+    std::vector<std::pair<int64_t,int64_t>> out_slices; 
+    Expr                                    expr;
 };
 
 ParsedProgram parse_dsl(const std::string &src);

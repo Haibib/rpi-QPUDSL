@@ -3,8 +3,8 @@ CFLAGS  += -I$(QPU_DSL_PATH)/libpi/src
 
 PROGS := test-gen-add.c
 
+COMMON_SRC += gen-add-qpu.c
 COMMON_SRC += gen-add.c
-COMMON_SRC += genshader.c
 COMMON_SRC += $(QPU_DSL_PATH)/libpi/src/mailbox.c
 
 STAFF_OBJS += $(QPU_DSL_PATH)/libpi/staff-objs/staff-hw-spi.o
@@ -17,5 +17,5 @@ EXCLUDE    ?= grep -v simple_boot
 GREP_STR   := 'HASH:\|ERROR:\|PANIC:\|SUCCESS:\|NRF:'
 include $(QPU_DSL_PATH)/libpi/mk/Makefile.robust
 
-genshader.c genshader.h: genshader.qasm
-	vc4asm -V -c genshader.c -h genshader.h -I $(QPU_DSL_PATH)/share/vc4inc/ $<
+gen-add.c gen-add.h: gen-add.qasm
+	vc4asm -V -c gen-add.c -h gen-add.h -I $(QPU_DSL_PATH)/share/vc4inc/ $<

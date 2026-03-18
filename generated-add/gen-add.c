@@ -1,86 +1,109 @@
-#include <stddef.h>
-#include <string.h>
 #include "gen-add.h"
-#include "mailbox.h"
-#include "genshader.h"
 
-static void gpu_prepare(volatile struct genGPU **gpu)
-{
-    uint32_t handle, vc;
-    volatile struct genGPU *ptr;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-    if (qpu_enable(1))
-        panic("Failed to enable GPU");
-
-    handle = mem_alloc(sizeof(struct genGPU), 4096, GPU_MEM_FLG);
-    if (!handle) {
-        qpu_enable(0);
-        panic("Failed to allocate GPU memory");
-    }
-
-    vc  = mem_lock(handle);
-    ptr = (volatile struct genGPU *)(vc - GPU_BASE);
-    if (!ptr) {
-        mem_free(handle);
-        mem_unlock(handle);
-        qpu_enable(0);
-        panic("Failed to map GPU memory");
-    }
-
-    ptr->handle  = handle;
-    ptr->mail[0] = vc + offsetof(struct genGPU, code);
-    ptr->mail[1] = vc + offsetof(struct genGPU, unif);
-    *gpu = ptr;
+#ifdef _MSC_VER
+__declspec(align(8))
+#elif defined(__GNUC__)
+__attribute__((aligned(8)))
+#endif
+uint32_t gen_add[180] = {
+0x15827d80, 0x10020027,
+0x15827d80, 0x10020067,
+0x15827d80, 0x100200a7,
+0x15827d80, 0x100200e7,
+0x15827d80, 0x10020127,
+0x15827d80, 0x10020167,
+0x15827d80, 0x10021027,
+0x15827d80, 0x10021067,
+0x15827d80, 0x10020867,
+0x159c1fc0, 0x10020827,
+0x0e9c41c0, 0xd0020827,
+0x0e9c31c0, 0xd00208a7,
+0x119c35c0, 0xd00208e7,
+0x0d9e70c0, 0x100208e7,
+0x409e700a, 0x100049e0,
+0x0d9e72c0, 0x100228a7,
+0x159e7240, 0x100808a7,
+0x159e76c0, 0x100a08a7,
+0x0c9e7080, 0x10020827,
+0x119c41c0, 0xd0020827,
+0x0c0e7c00, 0x100200e7,
+0x0c127c00, 0x10020127,
+0x0c167c00, 0x10020167,
+0x00000004, 0xe00201a7,
+0x159c1fc0, 0x10020827,
+0x0e9c41c0, 0xd0020827,
+0x0e9c31c0, 0xd00208a7,
+0x119c35c0, 0xd00208e7,
+0x0d9e70c0, 0x100208e7,
+0x0d9e72c0, 0x10022827,
+0x159e7480, 0x10020827,
+0x0c9c11c0, 0xd0080827,
+0x159e7000, 0x100201e7,
+0x00000040, 0xe0021027,
+0x119c23c0, 0xd0021067,
+0x119c63c0, 0xd00210a7,
+0x119c93c0, 0xd00210e7,
+0x15027d80, 0x10021167,
+0x150e7d80, 0x10020827,
+0x151a7d80, 0x10020867,
+0x409e7001, 0x100049e0,
+0x0c9c5e00, 0x10021167,
+0x15067d80, 0x100211a7,
+0x15127d80, 0x10020827,
+0x151a7d80, 0x10020867,
+0x409e7001, 0x100049e0,
+0x0c9c6e00, 0x100211a7,
+0x15167d80, 0x10020827,
+0x151a7d80, 0x10020867,
+0x409e7001, 0x100049e0,
+0x0c0a7c00, 0x100200a7,
+0x151e7d80, 0x10021127,
+0x83011000, 0xe0020827,
+0x0c9c21c0, 0x10020c67,
+0x159c5fc0, 0x10020ca7,
+0x15ca7d80, 0x100009e7,
+0x00101a00, 0xe0020827,
+0x0c9c11c0, 0x10020c67,
+0x15c27d80, 0x10020827,
+0x15ca7d80, 0x100009e7,
+0x83011000, 0xe00208a7,
+0x0c9c25c0, 0x10020c67,
+0x159c6fc0, 0x10020ca7,
+0x15ca7d80, 0x100009e7,
+0x00101a00, 0xe00208a7,
+0x0c9c15c0, 0x10020c67,
+0x15c27d80, 0x100208a7,
+0x15ca7d80, 0x100009e7,
+0x0c9e7080, 0x10020827,
+0x00101a00, 0xe00208a7,
+0x0c9c15c0, 0x10021c67,
+0x159e7000, 0x10020c27,
+0x80904000, 0xe00208a7,
+0x0c9c35c0, 0x10021c67,
+0x150a7d80, 0x10021ca7,
+0x159f2fc0, 0x100009e7,
+0x159c5fc0, 0x10020827,
+0x0c9c01c0, 0x10021167,
+0x159c6fc0, 0x10020827,
+0x0c9c01c0, 0x100211a7,
+0x0c080dc0, 0x100200a7,
+0x159c4fc0, 0x10020827,
+0x0d9c11c0, 0xd0023127,
+0xfffffee8, 0xf03809e7,
+0x009e7000, 0x100009e7,
+0x009e7000, 0x100009e7,
+0x009e7000, 0x100009e7,
+0x009e7000, 0x300009e7,
+0x009e7000, 0x100009e7,
+0x009e7000, 0x100009e7
+};
+#ifdef __HIGHC__
+#pragma Align_to(8, gen_add)
+#ifdef __cplusplus
 }
-
-uint32_t gen_add_execute(volatile struct genGPU *gpu)
-{
-    return gpu_fft_base_exec_direct(
-        gpu->mail[0],
-        (uint32_t *)gpu->unif_ptr,
-        gpu->num_qpus);
-}
-
-void vec_gen_add_release(volatile struct genGPU *gpu)
-{
-    uint32_t handle = gpu->handle;
-    mem_unlock(handle);
-    mem_free(handle);
-    qpu_enable(0);
-}
-
-void vec_gen_add_init(volatile struct genGPU **gpu, uint32_t n, uint32_t num_qpus)
-{
-    if (n > N) panic("Requested length %d > capacity %d", n, N);
-    if (num_qpus < 1)       num_qpus = 1;
-    if (num_qpus > MAX_QPUS) num_qpus = MAX_QPUS;
-
-    gpu_prepare(gpu);
-    volatile struct genGPU *ptr = *gpu;
-    memcpy((void *)ptr->code, genshader, sizeof ptr->code);
-
-    uint32_t vc          = ptr->mail[0] - offsetof(struct genGPU, code);
-    uint32_t gpu_A_base  = vc + offsetof(struct genGPU, A);
-    uint32_t gpu_B_base  = vc + offsetof(struct genGPU, B);
-    uint32_t gpu_C_base  = vc + offsetof(struct genGPU, C);
-    uint32_t gpu_unif_base = ptr->mail[1];
-
-    ptr->num_qpus = num_qpus;
-
-    for (uint32_t q = 0; q < MAX_QPUS; ++q) {
-        if (q >= num_qpus) {
-            ptr->unif_ptr[q] = 0;
-            continue;
-        }
-        ptr->unif[q][0] = gpu_A_base;   // A base ptr
-        ptr->unif[q][1] = gpu_B_base;   // B base ptr
-        ptr->unif[q][2] = gpu_C_base;   // output base ptr
-        ptr->unif[q][3] = 0;            // A_slice_start 
-        ptr->unif[q][4] = 0;            // B_slice_start
-        ptr->unif[q][5] = 0;            // Z_slice_start
-        ptr->unif[q][6] = n;            // dim_size 
-        ptr->unif[q][7] = n;            // slice_size 
-        ptr->unif[q][8] = q;            // qpu_num
-        ptr->unif_ptr[q] = gpu_unif_base + q * NUM_UNIFS * sizeof(uint32_t);
-    }
-}
+#endif
+#endif

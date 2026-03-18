@@ -18,6 +18,11 @@ cmake --build build-dbg --config Debug -j<N PARALLELISM>
 ```
 
 3. Run
+
+```bash 
+./build/dsl generated-slice-add/slice-add.dsl generated-slice-add/
+```
+
 ```bash
-./build/compiler
+./build/compiler (Runs the main in compiler.cpp)
 ```

@@ -32,7 +32,6 @@ sub.setf r0, r1, r3
 mov r0, r2
 add.ifn r0, r0, 1
 mov ra7, r0
-mov r0, rb2
 mov rb0, 64
 shl rb1, r1, 2
 shl rb2, r1, 6
@@ -93,3 +92,4 @@ nop
 thrend
 nop
 nop
+

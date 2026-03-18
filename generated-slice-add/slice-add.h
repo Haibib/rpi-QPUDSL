@@ -1,5 +1,5 @@
-#ifndef genshader_H
-#define genshader_H
+#ifndef slice_add_H
+#define slice_add_H
 
 #include <inttypes.h>
 
@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-extern uint32_t genshader[182];
+extern uint32_t slice_add[298];
 
 
 #ifdef __cplusplus

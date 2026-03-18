@@ -204,11 +204,19 @@ struct Parser {
                                      ": unknown constructor '" + fn.text + "'");
     }
 
-    // slicedim 
-    std::pair<int64_t,int64_t> parse_slicedim() {
-        int64_t start = parse_signed_int();
+    // slicedim
+    std::pair<int64_t,int64_t> parse_slicedim(int64_t dim_size) {
+        int64_t start = 0;
+        if (!at(TK::COLON)) {
+            start = parse_signed_int();
+            if (start < 0) start = dim_size + start;
+        }
         expect(TK::COLON, ":");
-        int64_t end   = parse_signed_int();
+        int64_t end = dim_size;
+        if (!at(TK::RBRACKET) && !at(TK::COMMA)) {
+            end = parse_signed_int();
+            if (end < 0) end = dim_size + end;
+        }
         return {start, end};
     }
 
@@ -231,13 +239,15 @@ struct Parser {
             // Parse slice list
             std::vector<std::pair<int64_t,int64_t>> slices;
             if (try_consume(TK::LBRACKET)) {
-                slices.push_back(parse_slicedim());
-                while (try_consume(TK::COMMA))
-                    slices.push_back(parse_slicedim());
+                for (int d = 0; !at(TK::RBRACKET) && !at(TK::END); ++d) {
+                    if (d > 0) expect(TK::COMMA, ",");
+                    int64_t ds = (d < N) ? decl.dims[d] : 1;
+                    slices.push_back(parse_slicedim(ds));
+                }
                 expect(TK::RBRACKET, "]");
             }
             while ((int)slices.size() < N)
-                slices.push_back({0, -1});
+                slices.push_back({0, decl.dims[(int)slices.size()]});
 
             int idx = ref_count[name]++;
             std::string gen = name + "_" + std::to_string(idx);
@@ -283,19 +293,67 @@ struct Parser {
         return e;
     }
 
+    // Parse output assignment name = expr
+    void parse_output_assignment(ParsedProgram &prog) {
+        const Token &lhs = expect(TK::IDENT, "identifier");
+        const std::string &oname = lhs.text;
+        prog.out_name = oname;
+
+        if (try_consume(TK::LBRACKET)) {
+            if (!tensor_map.count(oname))
+                throw std::runtime_error(
+                    "line " + std::to_string(lhs.line) +
+                    ": output tensor '" + oname + "' not declared");
+            ParsedTensorDecl &decl = tensors[tensor_map[oname]];
+            int N = (int)decl.dims.size();
+            for (int d = 0; !at(TK::RBRACKET) && !at(TK::END); ++d) {
+                if (d > 0) expect(TK::COMMA, ",");
+                int64_t ds = (d < N) ? decl.dims[d] : 1;
+                prog.out_slices.push_back(parse_slicedim(ds));
+            }
+            expect(TK::RBRACKET, "]");
+        }
+
+        expect(TK::EQ, "=");
+        prog.expr = parse_expression();
+    }
+
     ParsedProgram run() {
-        Expr expr;
+        ParsedProgram prog;
         bool has_expr = false;
 
         while (!at(TK::END)) {
-            if (at(TK::IDENT) && pos + 1 < (int)toks.size() && toks[pos+1].kind == TK::EQ) {
+            // Declaration Identifier = makeTensor/makeScalar(...)
+            if (at(TK::IDENT) && pos + 1 < (int)toks.size() &&
+                toks[pos+1].kind == TK::EQ &&
+                pos + 2 < (int)toks.size() &&
+                (toks[pos+2].text == "makeTensor" || toks[pos+2].text == "makeScalar")) {
                 parse_declaration();
+            // Output with slices: Identifier[...] = expr
+            } else if (at(TK::IDENT) && pos + 1 < (int)toks.size() &&
+                       toks[pos+1].kind == TK::LBRACKET) {
+                if (has_expr)
+                    throw std::runtime_error(
+                        "line " + std::to_string(peek().line) +
+                        ": only one output expression is supported");
+                parse_output_assignment(prog);
+                has_expr = true;
+            // Named output: Identifier = expr
+            } else if (at(TK::IDENT) && pos + 1 < (int)toks.size() &&
+                       toks[pos+1].kind == TK::EQ) {
+                if (has_expr)
+                    throw std::runtime_error(
+                        "line " + std::to_string(peek().line) +
+                        ": only one output expression is supported");
+                parse_output_assignment(prog);
+                has_expr = true;
             } else {
                 if (has_expr)
                     throw std::runtime_error(
                         "line " + std::to_string(peek().line) +
                         ": only one expression is supported");
-                expr = parse_expression();
+                prog.out_name = "Z";
+                prog.expr = parse_expression();
                 has_expr = true;
             }
         }
@@ -303,11 +361,9 @@ struct Parser {
         if (!has_expr)
             throw std::runtime_error("DSL has no expression");
 
-        ParsedProgram prog;
         prog.tensors    = std::move(tensors);
         prog.scalars    = std::move(scalars);
         prog.slice_refs = std::move(slice_refs);
-        prog.expr       = std::move(expr);
         return prog;
     }
 };

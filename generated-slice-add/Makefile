@@ -1,10 +1,10 @@
 LIBS    += $(QPU_DSL_PATH)/lib/libgcc.a $(QPU_DSL_PATH)/libpi/libpi.a
 CFLAGS  += -I$(QPU_DSL_PATH)/libpi/src
 
-PROGS := test-gen-mat-add.c
+PROGS := test-slice-add.c
 
-COMMON_SRC += mat-add-qpu.c
-COMMON_SRC += mat-add.c
+COMMON_SRC += slice-add-qpu.c
+COMMON_SRC += slice-add.c
 COMMON_SRC += $(QPU_DSL_PATH)/libpi/src/mailbox.c
 
 STAFF_OBJS += $(QPU_DSL_PATH)/libpi/staff-objs/staff-hw-spi.o
@@ -17,5 +17,5 @@ EXCLUDE    ?= grep -v simple_boot
 GREP_STR   := 'HASH:\|ERROR:\|PANIC:\|SUCCESS:\|NRF:'
 include $(QPU_DSL_PATH)/libpi/mk/Makefile.robust
 
-mat-add.c mat-add.h: mat-add.qasm
-	vc4asm -V -c mat-add.c -h mat-add.h $<
+slice-add.c slice-add.h: slice-add.qasm
+	vc4asm -V -c slice-add.c -h slice-add.h $<
