@@ -30,7 +30,7 @@ mov r0, 4
 mul24 r0, r0, rb0
 mov ra10, r0
 mov r0, rb2
-shr r0, r0, 4
+shr r0, r0, 6
 mov ra11, r0
 mov r0, rb3
 shr r2, r0, 3
@@ -40,7 +40,7 @@ sub.setf r0, r1, r3
 mov r0, r2
 add.ifn r0, r0, 1
 mov ra12, r0
-mov rb0, 64
+mov rb0, 256
 shl rb1, r1, 2
 shl rb2, r1, 6
 shl rb3, r1, 9
@@ -78,27 +78,40 @@ mov rb4, ra11
 
 
 :loop_0
-mov r0, vdr_setup_0(3, 16, 1, vdr_h32(1, 0, 0))
+mov r0, vdr_setup_0(3, 16, 4, vdr_h32(1, 0, 0))
 add vr_setup, r0, rb2
 mov vr_addr, rb6
 mov -, vr_wait
-mov r0, vpm_setup(1, 1, h32(0))
+mov r0, vpm_setup(4, 1, h32(0))
 add vr_setup, r0, rb1
-mov r0, vpm
+mov rb8, vpm
+mov rb9, vpm
+mov rb10, vpm
+mov rb11, vpm
 mov -, vr_wait
-mov r2, vdr_setup_0(3, 16, 1, vdr_h32(1, 0, 0))
-add vr_setup, r2, rb2
+mov r0, vdr_setup_0(3, 16, 4, vdr_h32(1, 0, 0))
+add vr_setup, r0, rb2
 mov vr_addr, rb7
 mov -, vr_wait
-mov r2, vpm_setup(1, 1, h32(0))
-add vr_setup, r2, rb1
-mov r2, vpm
+mov r0, vpm_setup(4, 1, h32(0))
+add vr_setup, r0, rb1
+mov r0, vpm
+add rb8, rb8, r0
+mov r0, vpm
+add rb9, rb9, r0
+mov r0, vpm
+add rb10, rb10, r0
+mov r0, vpm
+add rb11, rb11, r0
 mov -, vr_wait
-add r0, r0, r2
-mov r2, vpm_setup(1, 1, h32(0))
+mov r2, vpm_setup(4, 1, h32(0))
 add vw_setup, r2, rb1
-mov vpm, r0
-mov r2, vdw_setup_0(1, 16, dma_h32(0, 0))
+mov vpm, rb8
+mov vpm, rb9
+mov vpm, rb10
+mov vpm, rb11
+mov -, vw_wait
+mov r2, vdw_setup_0(4, 16, dma_h32(0, 0))
 add vw_setup, r2, rb3
 mov vw_addr, ra2
 mov -, vw_wait

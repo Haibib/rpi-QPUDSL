@@ -1,5 +1,5 @@
-#ifndef slice_add_H
-#define slice_add_H
+#ifndef mat_add_H
+#define mat_add_H
 
 #include <inttypes.h>
 
@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-extern uint32_t slice_add[336];
+extern uint32_t mat_add[274];
 
 
 #ifdef __cplusplus
