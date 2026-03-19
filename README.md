@@ -63,7 +63,7 @@ bash run.sh game-of-life 3
 
 ### Acknowledgements
 
-A portion of the Skeleton code in this repository is modeled after, or
+A significant portion of the skeleton code for the compiler in this repository is modeled after, or
 directly taken from, the [Halide] compiler. As a result, this repository benefits heavily
 from over a decade of hard work from the Halide developers.
 
