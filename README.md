@@ -60,8 +60,6 @@ chmod +x my-install
 ```bash
 bash run.sh game-of-life 3
 ```
-![Conway's Game of Life Demo](./Conway's-Game-of-Life.png)
-
 
 ### Acknowledgements
 
@@ -70,4 +68,9 @@ directly taken from, the [Halide] compiler. As a result, this repository benefit
 from over a decade of hard work from the Halide developers.
 
 [Halide]: https://github.com/halide/Halide
+
+
+![Conway's Game of Life Demo](./Conway's-Game-of-Life.png)
+
+
 
