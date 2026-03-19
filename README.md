@@ -7,7 +7,7 @@ APPiL is a domain-specific language (DSL) for array programming, loosely inspire
 
 The APPiL Language supports higher-order ‘N’ dimensional Tensors. APPiL programs begin with tensor definitions, which specify their shapes. The APPiL program’s last statement specifies the QPU kernel to be generated. APPiL supports elementwise operations on multiple tensors and also supports slicing of the input/output tensors. It also supports scalar arithmetic broadcasting operations. Currently, APPiL does not support general tensor broadcasting, reduction operations and control flow.
 
-### Example APPiL program to grayscale and RGB image
+### Example APPiL program to grayscale a RGB image
 
 
 ```
