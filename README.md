@@ -20,7 +20,7 @@ cmake --build build-dbg --config Debug -j<N PARALLELISM>
 3. Run
 
 ```bash 
-./build/dsl generated-slice-add/slice-add.dsl generated-slice-add/
+./build/dsl generated-slice-add/slice-add.appil generated-slice-add/
 ```
 
 ```bash

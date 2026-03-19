@@ -14,7 +14,7 @@ namespace fs = std::filesystem;
 
 int main(int argc, char **argv) {
     if (argc < 2) {
-        std::cerr << "usage: dsl <file.dsl> [output_dir]\n";
+        std::cerr << "usage: dsl <file.appil> [output_dir]\n";
         return 1;
     }
 
