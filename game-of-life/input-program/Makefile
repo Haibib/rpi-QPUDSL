@@ -1,4 +1,4 @@
-PROGS += GoL-unix.c
+PROGS += game-of-life-unix.c
 
 RUN = 0
 
@@ -7,5 +7,5 @@ EXCLUDE    ?= grep -v simple_boot
 GREP_STR   := 'HASH:\|ERROR:\|PANIC:\|SUCCESS:\|NRF:'
 include $(QPU_DSL_PATH)/libunix/mk/Makefile.unix
 
-GoL-unix.o: GoL-unix.c
+game-of-life-unix.o: game-of-life-unix.c
 	$(CC) $(CFLAGS) -c $< -o $@

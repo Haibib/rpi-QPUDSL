@@ -12,7 +12,7 @@
 #define READY_SIGNAL 0xAB
 #define FRAME_PERIOD_USEC 100000
 
-uint8_t GoLGrid[ROWS][COLS];
+uint8_t game_of_life_grid[ROWS][COLS];
 static int visualizer_fd = -1;
 
 static void usage(const char *msg) {
@@ -36,9 +36,9 @@ void read_initial_state(int pi_fd, char* input_file){
             continue;
         }
         if(character == '0') {
-            GoLGrid[r][c] = 0;
+            game_of_life_grid[r][c] = 0;
         } else if (character == '1') {
-            GoLGrid[r][c] = 1;
+            game_of_life_grid[r][c] = 1;
         } else {
             panic("invalid initial value: %d\n", (int)character);
         }
@@ -51,7 +51,7 @@ static void send_packed(int fd) {
     uint8_t packed[PACKED_BYTES];
     memset(packed, 0, sizeof packed);
     // treat matrix as flat
-    uint8_t *flat = (uint8_t *)GoLGrid;
+    uint8_t *flat = (uint8_t *)game_of_life_grid;
     for (uint32_t i = 0; i < TOTAL_CELLS; i++) {
         if (flat[i])
             packed[i / 8] |= (1 << (i % 8));
@@ -69,7 +69,7 @@ void read_pi_output(int pi_fd) {
         }
         total += n;
     }
-    uint8_t *flat = (uint8_t *)GoLGrid;
+    uint8_t *flat = (uint8_t *)game_of_life_grid;
     for (uint32_t i = 0; i < TOTAL_CELLS; i++) {
         flat[i] = (packed[i / 8] >> (i % 8)) & 1;
     }

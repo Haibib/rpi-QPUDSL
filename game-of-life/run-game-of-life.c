@@ -1,4 +1,4 @@
-#include "GoL-qpu.h"
+#include "game-of-life-qpu.h"
 #include "sw-uart.h"
 #include "rpi.h"
 
@@ -18,7 +18,7 @@ static void fill_values_from_uart(uint32_t *buf) {
         for (int bit = 0; bit < 8; bit++) {
             uint32_t idx = i * 8 + bit;
             if (idx < TOTAL_CELLS)
-                buf[GOL_A_OFF + idx] = (packed[i] >> bit) & 1;
+                buf[GAME_OF_LIFE_A_OFF + idx] = (packed[i] >> bit) & 1;
         }
     }
 }
@@ -29,7 +29,7 @@ static void send_values_to_uart(uint32_t *buf) {
     for (uint32_t i = 0; i < PACKED_BYTES; i++) {
         for (int bit = 0; bit < 8; bit++) {
             uint32_t idx = i * 8 + bit;
-            if (idx < TOTAL_CELLS && buf[GOL_A_OFF + idx])
+            if (idx < TOTAL_CELLS && buf[GAME_OF_LIFE_A_OFF + idx])
                 packed[i] |= (1 << bit);
         }
     }
@@ -39,7 +39,7 @@ static void send_values_to_uart(uint32_t *buf) {
 
 static void flip_bits(uint32_t *buf) {
     for (uint32_t i = 0; i < ROWS * COLS; i++) {
-        buf[GOL_B_OFF + i] = buf[GOL_A_OFF + i] ^ 1;
+        buf[GAME_OF_LIFE_B_OFF + i] = buf[GAME_OF_LIFE_A_OFF + i] ^ 1;
     }
 }
 
@@ -48,13 +48,13 @@ void run_bitflip(uint32_t *buf) {
     send_values_to_uart(buf);
 }
 
-void run_GoL(uint32_t *buf) {
-    GoL_kernel(&buf[GOL_A_OFF], &buf[GOL_B_OFF]);
+void run_game_of_life(uint32_t *buf) {
+    game_of_life_kernel(&buf[GAME_OF_LIFE_A_OFF], &buf[GAME_OF_LIFE_B_OFF]);
     for (uint32_t r = 1; r < ROWS - 1; r++) {
         for (uint32_t c = 1; c < COLS - 1; c++) {
             uint32_t i = r * COLS + c;
             // Alive if 3 neighbors or 2 neighbors and was previously alive
-            buf[GOL_A_OFF + i] = (buf[GOL_B_OFF + i] == 3 || (buf[GOL_B_OFF + i] == 2&& buf[GOL_A_OFF + i])) ? 1 : 0;
+            buf[GAME_OF_LIFE_A_OFF + i] = (buf[GAME_OF_LIFE_B_OFF + i] == 3 || (buf[GAME_OF_LIFE_B_OFF + i] == 2&& buf[GAME_OF_LIFE_A_OFF + i])) ? 1 : 0;
         }
     }
     send_values_to_uart(buf);
@@ -62,11 +62,11 @@ void run_GoL(uint32_t *buf) {
 
 void notmain(void)
 {
-    uint32_t *buf = GoL_init();
+    uint32_t *buf = game_of_life_init();
     uart_init();
     uart_put8(READY_SIGNAL);
     fill_values_from_uart(buf);
     while (1) {
-        run_GoL(buf);
+        run_game_of_life(buf);
     }
 }

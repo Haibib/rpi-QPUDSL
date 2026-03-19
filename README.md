@@ -29,10 +29,12 @@ cmake --build build-dbg --config Debug -j<N PARALLELISM>
 
 ```bash
 chmod +x my-install
-./run.sh <Program Name (GoL)> [Cell Size (Number)]
+./run.sh <Program Name (game-of-life)> [Cell Size (Number)]
+[!NOTE]
+> Baud Rate must be 460800 (must use --baud 460800 for my-install commands)
 ```
 
 ### Example
 ```bash
-bash run.sh GoL 3
+bash run.sh game-of-life 3
 ```

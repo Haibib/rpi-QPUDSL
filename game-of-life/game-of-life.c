@@ -1,4 +1,4 @@
-#include "GoL.h"
+#include "game-of-life.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -9,7 +9,7 @@ __declspec(align(8))
 #elif defined(__GNUC__)
 __attribute__((aligned(8)))
 #endif
-uint32_t GoL[646] = {
+uint32_t game_of_life[646] = {
 0x15827d80, 0x10020027,
 0x15827d80, 0x10020067,
 0x15827d80, 0x100200a7,
@@ -335,7 +335,7 @@ uint32_t GoL[646] = {
 0x009e7000, 0x100009e7
 };
 #ifdef __HIGHC__
-#pragma Align_to(8, GoL)
+#pragma Align_to(8, game_of_life)
 #ifdef __cplusplus
 }
 #endif

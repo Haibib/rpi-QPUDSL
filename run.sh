@@ -9,6 +9,8 @@ ROOT_DIR=$PWD
 PROGRAM_DIR="$ROOT_DIR/$PROGRAM"
 
 make -C "$ROOT_DIR/libpi/"
+make "$PROGRAM.c" -C "$PROGRAM_DIR"
+make "$PROGRAM.h" -C "$PROGRAM_DIR"
 make -C "$PROGRAM_DIR"
 make -C "$PROGRAM_DIR/input-program/"
 

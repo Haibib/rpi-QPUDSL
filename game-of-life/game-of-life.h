@@ -1,5 +1,5 @@
-#ifndef GoL_H
-#define GoL_H
+#ifndef game_of_life_H
+#define game_of_life_H
 
 #include <inttypes.h>
 
@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-extern uint32_t GoL[646];
+extern uint32_t game_of_life[646];
 
 
 #ifdef __cplusplus
