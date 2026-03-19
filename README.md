@@ -11,13 +11,13 @@ The APPiL Language supports higher-order ‘N’ dimensional Tensors. APPiL prog
 
 
 ```
-R = makeTensor(1024, 1024) // input tensors
-G = makeTensor(1024, 1024)
-B = makeTensor(1024, 1024)
+R = makeTensor(1024, 1024, float) // input tensors
+G = makeTensor(1024, 1024, float)
+B = makeTensor(1024, 1024, float)
 alpha = makeScalar(0.3)    
 beta  = makeScalar(0.59)
 theta = makeScalar(0.11)
-Grey = makeTensor(1024, 1024)  // output tensor
+Grey = makeTensor(1024, 1024, float)  // output tensor
 
 Grey = alpha*R + beta*G + theta*B    // Tensor Expression to compute
 ```
