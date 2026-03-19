@@ -1,7 +1,7 @@
 #include "game-of-life-qpu.h"
 
-#define ROWS 258
-#define COLS 258
+#define ROWS 130
+#define COLS 130
 
 static void fill_values(uint32_t *buf)
 {

@@ -64,18 +64,18 @@ void flatten_into(const cExpr &e, std::vector<EvalStep> &steps) {
 }
 
 
-// Batch-load 4 tiles of 16 elements from ptr_reg into QPU's 4 VPM rows.
-static void emit_dma_load_4tiles_setup(std::vector<llir::lStmt> &s,
+// Batch-load 8 tiles of 16 elements from ptr_reg into QPU's 8 VPM rows.
+static void emit_dma_load_8tiles_setup(std::vector<llir::lStmt> &s,
                                        llir::lOpr ptr_reg,
                                        llir::lOpr vdr_y_off,
                                        llir::lOpr vpm_row_base,
                                        llir::lOpr tmp)
 {
-    s.push_back(llir::Mov::make(tmp, mac("vdr_setup_0(3, 16, 4, vdr_h32(1, 0, 0))")));
+    s.push_back(llir::Mov::make(tmp, mac("vdr_setup_0(3, 16, 8, vdr_h32(1, 0, 0))")));
     s.push_back(llir::Add::make(mac("vr_setup"), tmp, vdr_y_off));
     s.push_back(llir::Mov::make(mac("vr_addr"), ptr_reg));
     s.push_back(llir::Mov::make(mac("-"), mac("vr_wait")));
-    s.push_back(llir::Mov::make(tmp, mac("vpm_setup(4, 1, h32(0))")));
+    s.push_back(llir::Mov::make(tmp, mac("vpm_setup(8, 1, h32(0))")));
     s.push_back(llir::Add::make(mac("vr_setup"), tmp, vpm_row_base));
 }
 
@@ -96,7 +96,7 @@ static llir::lOpr scalar_reg(int s)         { return ra(N_tensors + 1 + (N_tenso
 static llir::lOpr loop_counters(int d) { return rb(4+d);}
 static llir::lOpr curr_ptr_reg(int i) { return rb(4 + D_dims + i); }
 // tile_accum(k): rb registers for holding 4-tile results
-static llir::lOpr tile_accum(int tile) { return rb(4 + D_dims + N_tensors + tile); }
+static llir::lOpr tile_accum(int tile) { return rb(8 + D_dims + N_tensors + tile); }
 
 
 static void emit_preamble(std::vector<llir::lStmt> &s)
@@ -132,15 +132,15 @@ static void emit_preamble(std::vector<llir::lStmt> &s)
     s.push_back(llir::Mov::make(r(1), mac("unif")));
 
     //  each QPU q handles a contiguous block of the outermost dim.
-    // D==1: outermost==innermost; loop iterates in 4-tile of 16 elements each
-    //   Distribute group_count = sz/64 among 8 QPUs.
+    // D==1: outermost==innermost; loop iterates in 8-tile of 16 elements each
+    //   Distribute group_count = sz/128 among 8 QPUs.
     // D>=2: outermost is the row dimension; distribute rows among 8 QPUs.
     //   slice_start(i, D-1) offset is in row stride-units.
     {
         llir::lOpr sz_rb = rb((D_dims - 1) + D_dims);  // = slice_size[D-1]
         if (D_dims == 1) {
             s.push_back(llir::Mov::make(r(0), sz_rb));                             // r0 = sz
-            s.push_back(llir::Shr::make(r(0), r(0), imm(6)));                     // r0 = group_count = sz/64
+            s.push_back(llir::Shr::make(r(0), r(0), imm(7)));                     // r0 = group_count = sz/64
             s.push_back(llir::Shr::make(r(2), r(0), imm(3)));                     // r2 = base_groups
             s.push_back(llir::Shl::make(r(3), r(2), imm(3)));                     // r3 = base_groups*8
             s.push_back(llir::Sub::make(r(3), r(0), r(3)));                       // r3 = rem_groups
@@ -149,7 +149,7 @@ static void emit_preamble(std::vector<llir::lStmt> &s)
             s.push_back(llir::RawStmt::make("mov.ifn  r2, r1"));                  // if N: r2 = qpu_num
             s.push_back(llir::RawStmt::make("mov.ifnn r2, r3"));                  // if !N: r2 = rem_groups
             s.push_back(llir::Add::make(r(0), r(0), r(2)));                        // r0 = t_q (start group)
-            s.push_back(llir::Shl::make(r(0), r(0), imm(6)));                     // r0 = t_q * 64
+            s.push_back(llir::Shl::make(r(0), r(0), imm(7)));                     // r0 = t_q * 128
             for (int i = 0; i < N_tensors; ++i)
                 s.push_back(llir::Add::make(slice_start(i, 0), slice_start(i, 0), r(0)));
             s.push_back(llir::Add::make(out_slice_start(0), out_slice_start(0), r(0)));
@@ -174,7 +174,7 @@ static void emit_preamble(std::vector<llir::lStmt> &s)
     s.push_back(llir::Mov::make(stride_sizes(0), imm(4)));
 
     if(D_dims>1) {
-        // stride_size[1] = dim_size[0]*4
+        // stride_size[1] = dim_size[0]*8
         // stride_size[i] = stride_size[i-1]*dim_size[i-1] for i>1
         s.push_back(llir::Mov::make(r(0), imm(4)));
         for(int d=1;d<D_dims;++d) {
@@ -184,12 +184,12 @@ static void emit_preamble(std::vector<llir::lStmt> &s)
     }
     
 
-    // num_iterations[0] = slice_size[0] / 64(4 tiles of 16 elements)
+    // num_iterations[0] = slice_size[0] / 128(8 tiles of 16 elements)
     // num_iterations[d]  = slice_size[d]  for 0 < d < D-1
     // num_iterations[D-1]  = per-QPU share of slice_size[D-1]
     //                      = sz/8 + (qpu_num < sz%8 ? 1 : 0)
     s.push_back(llir::Mov::make(r(0), rb(0+D_dims)));
-    s.push_back(llir::Shr::make(r(0), r(0), imm(6)));   // r0 = slice_size[0]/64
+    s.push_back(llir::Shr::make(r(0), r(0), imm(7)));   // r0 = slice_size[0]/128
     for(int d=0;d<D_dims;++d) {
         if(d==D_dims-1) {
             // Per-QPU split: base = r0>>3, rem = r0 - base*8
@@ -207,14 +207,14 @@ static void emit_preamble(std::vector<llir::lStmt> &s)
     }
 
     
-    // rb(0)=256 tile-group byte stride 4tiles*64bytes, used in row correction
+    // rb(0)=512 tile-group byte stride 8tiles*64bytes, used in row correction
     // rb(1)=qpu<<2 for vpm_setup h32 y
     // rb(2)=qpu<<6 for vdr_setup_0 vdr_h32 y
     // rb(3)=qpu<<9 for vdw_setup_0 dma_h32 y
-    s.push_back(llir::Mov::make(rb(0), imm(256)));
-    s.push_back(llir::Shl::make(rb(1), r(1), imm(2)));
-    s.push_back(llir::Shl::make(rb(2), r(1), imm(6)));
-    s.push_back(llir::Shl::make(rb(3), r(1), imm(9)));
+    s.push_back(llir::Mov::make(rb(0), imm(512)));
+    s.push_back(llir::Shl::make(rb(1), r(1), imm(3)));
+    s.push_back(llir::Shl::make(rb(2), r(1), imm(7)));
+    s.push_back(llir::Shl::make(rb(3), r(1), imm(10)));
 }
 
 
@@ -222,7 +222,7 @@ llir::lStmt build_kernel(const KernelInfo &info) {
     N_tensors = (int)info.tensors.size();
     D_dims    = info.D;
     N_scalars = (int)info.scalars.size();
-    internal_assert(4 + D_dims + N_tensors + 4 <= 32)
+    internal_assert(8 + D_dims + N_tensors + 8 <= 32)
         << "rb register alloc invalid for 4-tile unroll";
 
 
@@ -282,10 +282,10 @@ llir::lStmt build_kernel(const KernelInfo &info) {
         if (d < 0) {
             for (const EvalStep &step : info.steps) {
                 if (step.is_scalar) {
-                    // Broadcast scalar value to all 4 tile accumulators.
+                    // Broadcast scalar value to all 8 tile accumulators.
                     int si = scalar_idx(step.tensor);
                     llir::lOpr src = scalar_reg(si);
-                    for (int k = 0; k < 4; ++k) {
+                    for (int k = 0; k < 8; ++k) {
                         if (step.is_init) {
                             s.push_back(llir::Mov::make(tile_accum(k), src));
                         } else if (step.op == OpType::Add) {
@@ -298,13 +298,13 @@ llir::lStmt build_kernel(const KernelInfo &info) {
                     }
                 } else {
                     int ti = tensor_idx(step.tensor);
-                    emit_dma_load_4tiles_setup(s, curr_ptr_reg(ti), rb(2), rb(1), r(0));
-                    // Read 4 tiles from VPM and accumulate into tile accumulators.
+                    emit_dma_load_8tiles_setup(s, curr_ptr_reg(ti), rb(2), rb(1), r(0));
+                    // Read 8 tiles from VPM and accumulate into tile accumulators.
                     if (step.is_init) {
-                        for (int k = 0; k < 4; ++k)
+                        for (int k = 0; k < 8; ++k)
                             s.push_back(llir::Mov::make(tile_accum(k), mac("vpm")));
                     } else {
-                        for (int k = 0; k < 4; ++k) {
+                        for (int k = 0; k < 8; ++k) {
                             s.push_back(llir::Mov::make(r(0), mac("vpm")));
                             if (step.op == OpType::Add)
                                 s.push_back(arith_add(tile_accum(k), tile_accum(k), r(0)));
@@ -318,12 +318,12 @@ llir::lStmt build_kernel(const KernelInfo &info) {
                 }
             }
 
-            s.push_back(llir::Mov::make(r(2), mac("vpm_setup(4, 1, h32(0))")));
+            s.push_back(llir::Mov::make(r(2), mac("vpm_setup(8, 1, h32(0))")));
             s.push_back(llir::Add::make(mac("vw_setup"), r(2), rb(1)));
-            for (int k = 0; k < 4; ++k)
+            for (int k = 0; k < 8; ++k)
                 s.push_back(llir::Mov::make(mac("vpm"), tile_accum(k)));
             s.push_back(llir::Mov::make(mac("-"), mac("vw_wait")));
-            s.push_back(llir::Mov::make(r(2), mac("vdw_setup_0(4, 16, dma_h32(0, 0))")));
+            s.push_back(llir::Mov::make(r(2), mac("vdw_setup_0(8, 16, dma_h32(0, 0))")));
             s.push_back(llir::Add::make(mac("vw_setup"), r(2), rb(3)));
             s.push_back(llir::Mov::make(mac("vw_addr"), get_out_ptr_reg()));
             s.push_back(llir::Mov::make(mac("-"), mac("vw_wait")));
@@ -351,7 +351,7 @@ llir::lStmt build_kernel(const KernelInfo &info) {
             s.push_back(llir::Mov::make(r(0), stride_sizes(d)));
             s.push_back(llir::Mov::make(r(1), num_iterations(d - 1)));
             if (d == 1) {
-                // innermost loop advances rb(0)=256 bytes per iteration
+                // innermost loop advances rb(0)=512 bytes per iteration
                 s.push_back(llir::Mul::make(r(1), r(1), rb(0)));
             } else {
                 s.push_back(llir::Mov::make(r(2), stride_sizes(d - 1)));
