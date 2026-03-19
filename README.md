@@ -31,3 +31,8 @@ cmake --build build-dbg --config Debug -j<N PARALLELISM>
 chmod +x my-install
 ./run.sh <Program Name (GoL)> [Cell Size (Number)]
 ```
+
+### Example
+```bash
+bash run.sh GoL 3
+```
