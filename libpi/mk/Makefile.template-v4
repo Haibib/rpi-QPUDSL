@@ -53,7 +53,7 @@ endif
 # add libpi to LIBS
 LIBS += $(LIB) $(LPI) 
 
-include $(CS240LX_2025_PATH)/libpi/defs.mk
+include $(QPU_DSL_PATH)/libpi/defs.mk
 
 ifndef MK_CHK
     MK_CHK := $(LPP)/mk/Makefile.check-v3

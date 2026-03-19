@@ -45,3 +45,6 @@ cmake-build-*
 # MacOS debug symbol files
 *.dSYM/
 .DS_Store
+
+*.bin
+*.list

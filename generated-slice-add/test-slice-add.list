@@ -1815,6 +1815,7 @@ Disassembly of section .text:
     9a8c:	e12fff1e 	bx	lr
     9a90:	0000af58 	.word	0x0000af58
 
+<<<<<<< Updated upstream
 00009a94 <_cstart>:
     9a94:	e92d4030 	push	{r4, r5, lr}
     9a98:	e24dd00c 	sub	sp, sp, #12, 0
@@ -1869,6 +1870,62 @@ Disassembly of section .text:
     9b5c:	0000a9e8 	.word	0x0000a9e8
     9b60:	0000a970 	.word	0x0000a970
     9b64:	0000a9b8 	.word	0x0000a9b8
+=======
+00009abc <_cstart>:
+    9abc:	e92d4030 	push	{r4, r5, lr}
+    9ac0:	e24dd00c 	sub	sp, sp, #12, 0
+    9ac4:	e59f30a4 	ldr	r3, [pc, #164]	; 9b70 <_cstart+0xb4>
+    9ac8:	e59f20a4 	ldr	r2, [pc, #164]	; 9b74 <_cstart+0xb8>
+    9acc:	e1530002 	cmp	r3, r2
+    9ad0:	33a02000 	movcc	r2, #0, 0
+    9ad4:	34c32001 	strbcc	r2, [r3], #1
+    9ad8:	3afffffa 	bcc	9ac8 <_cstart+0xc>
+    9adc:	eb0000d1 	bl	9e28 <uart_init>
+    9ae0:	e3a03001 	mov	r3, #1, 0
+    9ae4:	ee0f3f1c 	mcr	15, 0, r3, cr15, cr12, {0}
+    9ae8:	e3a02a01 	mov	r2, #4096	; 0x1000
+    9aec:	e3a01000 	mov	r1, #0, 0
+    9af0:	e1a00001 	mov	r0, r1
+    9af4:	ebfffe5e 	bl	9474 <memset>
+    9af8:	e59f1078 	ldr	r1, [pc, #120]	; 9b78 <_cstart+0xbc>
+    9afc:	e59f0078 	ldr	r0, [pc, #120]	; 9b7c <_cstart+0xc0>
+    9b00:	ebfffea0 	bl	9588 <printk>
+    9b04:	e3a04000 	mov	r4, #0, 0
+    9b08:	e1a05004 	mov	r5, r4
+    9b0c:	ea000005 	b	9b28 <_cstart+0x6c>
+    9b10:	e2855001 	add	r5, r5, #1, 0
+    9b14:	e5912000 	ldr	r2, [r1]
+    9b18:	e1a03005 	mov	r3, r5
+    9b1c:	e59f005c 	ldr	r0, [pc, #92]	; 9b80 <_cstart+0xc4>
+    9b20:	ebfffe98 	bl	9588 <printk>
+    9b24:	e2844001 	add	r4, r4, #1, 0
+    9b28:	e3540b01 	cmp	r4, #1024	; 0x400
+    9b2c:	2a000004 	bcs	9b44 <_cstart+0x88>
+    9b30:	e1a01104 	lsl	r1, r4, #2
+    9b34:	e5913000 	ldr	r3, [r1]
+    9b38:	e3530000 	cmp	r3, #0, 0
+    9b3c:	0afffff8 	beq	9b24 <_cstart+0x68>
+    9b40:	eafffff2 	b	9b10 <_cstart+0x54>
+    9b44:	e3550000 	cmp	r5, #0, 0
+    9b48:	1a000001 	bne	9b54 <_cstart+0x98>
+    9b4c:	ebfff9c5 	bl	8268 <notmain>
+    9b50:	ebffffce 	bl	9a90 <clean_reboot>
+    9b54:	e58d5000 	str	r5, [sp]
+    9b58:	e3a03023 	mov	r3, #35, 0	; 0x23
+    9b5c:	e59f2020 	ldr	r2, [pc, #32]	; 9b84 <_cstart+0xc8>
+    9b60:	e59f1020 	ldr	r1, [pc, #32]	; 9b88 <_cstart+0xcc>
+    9b64:	e59f0020 	ldr	r0, [pc, #32]	; 9b8c <_cstart+0xd0>
+    9b68:	ebfffe86 	bl	9588 <printk>
+    9b6c:	ebffffc7 	bl	9a90 <clean_reboot>
+    9b70:	0000aecc 	.word	0x0000aecc
+    9b74:	0000aee8 	.word	0x0000aee8
+    9b78:	0000a94c 	.word	0x0000a94c
+    9b7c:	0000a954 	.word	0x0000a954
+    9b80:	0000a96c 	.word	0x0000a96c
+    9b84:	0000aa0c 	.word	0x0000aa0c
+    9b88:	0000a998 	.word	0x0000a998
+    9b8c:	0000a9dc 	.word	0x0000a9dc
+>>>>>>> Stashed changes
 
 00009b68 <delay_cycles>:
     9b68:	e2403001 	sub	r3, r0, #1, 0

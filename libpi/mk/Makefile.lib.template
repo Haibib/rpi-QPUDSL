@@ -68,7 +68,7 @@ VPATH := $(sort $(dir $(ALL_SRC)))
 
 .SUFFIXES: .run
 
-DEFS = $(CS240LX_2025_PATH)/libpi/defs.mk
+DEFS = $(QPU_DSL_PATH)/libpi/defs.mk
 include $(DEFS)
 # CFLAGS += -Wno-unused-function -Wno-unused-variable  $(EXTRA_CFLAGS)
 CFLAGS += $(EXTRA_CFLAGS)

@@ -26,3 +26,8 @@ cmake --build build-dbg --config Debug -j<N PARALLELISM>
 ```bash
 ./build/compiler (Runs the main in compiler.cpp)
 ```
+
+```bash
+chmod +x my-install
+./run.sh <Program Name (GoL)> [Cell Size (Number)]
+```

@@ -27,7 +27,7 @@ USE_FP=1
 # add all the .h's as dependencies, libpi and the makefile.
 DEPS := $(wildcard ./*.h) ./Makefile $(LPI)
 
-include $(CS240LX_2025_PATH)/libpi/defs.mk
+include $(QPU_DSL_PATH)/libpi/defs.mk
 
 #ARM = arm-none-eabi
 #CC = $(ARM)-gcc

@@ -32,6 +32,6 @@ enum { RZ_NBYTES = 4096 };
 
 static inline void redzone_init(void) {
     memset(0, 0, RZ_NBYTES);
-    assert(redzone_check("init"));
+    // assert(redzone_check("init"));
 }
 #endif

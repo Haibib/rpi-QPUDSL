@@ -1,8 +1,8 @@
 # setup useful variables that can be used by make.
 
 # this must be defined in your shell's startup file.
-ifndef CS240LX_2025_PATH
-$(error CS240LX_2025_PATH is not set: this should contain the absolute path to where this directory is.  Define it in your shell's initialiation.  For example, .tcshrc for tcsh or .bashrc for bash)
+ifndef QPU_DSL_PATH
+$(error QPU_DSL_PATH is not set: this should contain the absolute path to where this directory is.  Define it in your shell's initialiation.  For example, .tcshrc for tcsh or .bashrc for bash)
 endif
 
 # OPT_LEVEL = -O3
@@ -13,17 +13,17 @@ AS  = $(ARM)-as
 AR = $(ARM)-ar
 OD  = $(ARM)-objdump
 OCP = $(ARM)-objcopy
-CS240LX_2025_LIBPI_PATH = $(CS240LX_2025_PATH)/libpi
+CS240LX_2025_LIBPI_PATH = $(QPU_DSL_PATH)/libpi
 LPP = $(CS240LX_2025_LIBPI_PATH)
 LPI ?= $(LPP)/libpi.a
-LGCC ?= $(CS240LX_2025_PATH)/lib/libgcc.a
+LGCC ?= $(QPU_DSL_PATH)/lib/libgcc.a
 
 # let the client override these.
 START ?= $(LPP)/staff-start.o
 DEFAULT_START := $(LPP)/staff-start.o
 MEMMAP ?= $(LPP)/memmap
 
-LIBM_DIR ?=  $(CS240LX_2025_PATH)/lib/libm/
+LIBM_DIR ?=  $(QPU_DSL_PATH)/lib/libm/
 LIBM ?=  $(LIBM_DIR)/libm-pi.a
 LIBM_INC ?=  -I$(LIBM_DIR) -I$(LIBM_DIR)/include/
 

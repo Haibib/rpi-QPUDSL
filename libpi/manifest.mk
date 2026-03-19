@@ -47,8 +47,8 @@ staff-start.o: $(BUILD_DIR)/staff-start.o
 
 # XXX: some kind of bug where if you modify include/rpi.h it doesn't
 # remake?? how is that possible/
-include $(CS240LX_2025_PATH)/libpi/mk/Makefile.template-fixed
-# include $(CS240LX_2025_PATH)/libpi/mk/Makefile.robust-v2
+include $(QPU_DSL_PATH)/libpi/mk/Makefile.template-fixed
+# include $(QPU_DSL_PATH)/libpi/mk/Makefile.robust-v2
 
 clean::
 	rm -f staff-start.o
