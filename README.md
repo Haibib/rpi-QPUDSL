@@ -37,4 +37,5 @@ chmod +x my-install
 ### Example
 ```bash
 bash run.sh game-of-life 3
+[Conway's Game of Life Demo](/Conway's-Game-of-Life.png)
 ```
