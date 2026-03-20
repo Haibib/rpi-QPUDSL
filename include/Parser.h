@@ -18,7 +18,7 @@ struct ParsedTensorDecl {
 
 struct ParsedScalarDecl {
     std::string name;
-    int64_t     value;
+    double      value;  // stored as double; covers both int and float literals
     dType       dtype;
 };
 

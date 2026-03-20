@@ -13,6 +13,7 @@ enum class OpType { Add, Sub, Mul };
 
 struct EvalStep {
     std::string tensor;
+    std::string fused_scalar;
     bool        is_init;
     bool        is_scalar;
     OpType      op;

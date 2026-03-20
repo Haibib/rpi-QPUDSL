@@ -76,6 +76,9 @@ void generate_caller_code(const ParsedProgram &prog,
     int num_unifs = N + 1 + (N + 1) * D + 2 * D + S + 1;
 
 
+    std::map<std::string, dType> scalar_dtype_map;
+    for (const auto &sd : prog.scalars) scalar_dtype_map[sd.name] = sd.dtype;
+
     std::map<std::string, const ParsedSliceRef *> slice_map;
     for (const auto &sr : prog.slice_refs) slice_map[sr.gen_name] = &sr;
 
@@ -235,8 +238,11 @@ void generate_caller_code(const ParsedProgram &prog,
         hdr.str(""); hdr.clear();
         hdr << s.substr(0, s.size() - 2);
     }
-    for (int s = 0; s < S; ++s)
-        hdr << ", uint32_t " << info.scalars[s];
+    for (int s = 0; s < S; ++s) {
+        bool is_float = scalar_dtype_map.count(info.scalars[s]) &&
+                        scalar_dtype_map.at(info.scalars[s]) == dType::FLOAT32;
+        hdr << ", " << (is_float ? "float" : "uint32_t") << " " << info.scalars[s];
+    }
     hdr << ");\n\n";
 
     hdr << "void " << name << "_release(void);\n";
@@ -296,8 +302,11 @@ void generate_caller_code(const ParsedProgram &prog,
         src.str(""); src.clear();
         src << s.substr(0, s.size() - 2);
     }
-    for (int s = 0; s < S; ++s)
-        src << ", uint32_t " << info.scalars[s];
+    for (int s = 0; s < S; ++s) {
+        bool is_float = scalar_dtype_map.count(info.scalars[s]) &&
+                        scalar_dtype_map.at(info.scalars[s]) == dType::FLOAT32;
+        src << ", " << (is_float ? "float" : "uint32_t") << " " << info.scalars[s];
+    }
     src << ") {\n";
 
     src << "    uint32_t vc_base = _gpu->mail[0] - offsetof(struct "
@@ -351,8 +360,14 @@ void generate_caller_code(const ParsedProgram &prog,
         src << "        _gpu->unif[q][u++] = " << sz << ";\n";
     }
 
-    for (int s = 0; s < S; ++s)
-        src << "        _gpu->unif[q][u++] = " << info.scalars[s] << ";\n";
+    for (int s = 0; s < S; ++s) {
+        bool is_float = scalar_dtype_map.count(info.scalars[s]) &&
+                        scalar_dtype_map.at(info.scalars[s]) == dType::FLOAT32;
+        if (is_float)
+            src << "        _gpu->unif[q][u++] = *(const uint32_t *)&" << info.scalars[s] << ";\n";
+        else
+            src << "        _gpu->unif[q][u++] = " << info.scalars[s] << ";\n";
+    }
     src << "        _gpu->unif[q][u++] = q;\n"
         << "        _gpu->unif_ptr[q] = _gpu->mail[1]"
         << " + q * " << NAME << "_NUM_UNIFS * sizeof(uint32_t);\n"

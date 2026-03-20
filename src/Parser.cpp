@@ -14,7 +14,7 @@ namespace qpudsl {
 
 
 enum class TK {
-    IDENT, INT, STRING,
+    IDENT, INT, FLOAT, STRING,
     PLUS, MINUS, STAR,
     EQ, LPAREN, RPAREN, LBRACKET, RBRACKET, COLON, COMMA,
     END
@@ -61,11 +61,17 @@ static std::vector<Token> lex(const std::string &src) {
             continue;
         }
 
-        // Integer 
+        // Integer or float literal
         if (std::isdigit((unsigned char)src[i])) {
             std::string s;
             while (i < n && std::isdigit((unsigned char)src[i])) s += src[i++];
-            tokens.push_back({TK::INT, s, line});
+            if (i < n && src[i] == '.') {
+                s += src[i++];
+                while (i < n && std::isdigit((unsigned char)src[i])) s += src[i++];
+                tokens.push_back({TK::FLOAT, s, line});
+            } else {
+                tokens.push_back({TK::INT, s, line});
+            }
             continue;
         }
 
@@ -158,7 +164,7 @@ struct Parser {
         decl.name  = name;
         decl.dtype = dType::INT32;
         while (!at(TK::RPAREN) && !at(TK::END)) {
-            if (at(TK::STRING)) {
+            if (at(TK::STRING) || at(TK::IDENT)) {
                 decl.dtype = string_to_dtype(consume().text, line);
             } else {
                 decl.dims.push_back(parse_signed_int());
@@ -173,15 +179,22 @@ struct Parser {
         tensors.push_back(std::move(decl));
     }
 
-    // Parse makeScalar(value, [dtype])
     void parse_make_scalar(const std::string &name, int line) {
         expect(TK::LPAREN, "(");
         ParsedScalarDecl decl;
         decl.name  = name;
         decl.dtype = dType::INT32;
-        decl.value = parse_signed_int();
+        bool neg = try_consume(TK::MINUS);
+        if (at(TK::FLOAT)) {
+            decl.value = std::stod(consume().text);
+            if (neg) decl.value = -decl.value;
+            decl.dtype = dType::FLOAT32;
+        } else {
+            const Token &t = expect(TK::INT, "integer or float");
+            decl.value = (double)(neg ? -std::stoll(t.text) : std::stoll(t.text));
+        }
         if (try_consume(TK::COMMA)) {
-            if (at(TK::STRING))
+            if (at(TK::STRING) || at(TK::IDENT))
                 decl.dtype = string_to_dtype(consume().text, line);
         }
         expect(TK::RPAREN, ")");

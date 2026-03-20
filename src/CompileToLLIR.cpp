@@ -33,11 +33,44 @@ static std::string leaf_name(const cExpr &e) {
 }
 static bool leaf_is_scalar(const cExpr &e) { return e.as<cScalar>() != nullptr; }
 
+static bool is_fused_mul(const cExpr &e, std::string &tensor_name, std::string &scalar_name) {
+    const cMul *m = e.as<cMul>();
+    if (!m) return false;
+    bool a_scalar = is_leaf(m->a) && leaf_is_scalar(m->a);
+    bool b_scalar = is_leaf(m->b) && leaf_is_scalar(m->b);
+    bool a_tensor = is_leaf(m->a) && !leaf_is_scalar(m->a);
+    bool b_tensor = is_leaf(m->b) && !leaf_is_scalar(m->b);
+    if (a_scalar && b_tensor) { scalar_name = leaf_name(m->a); tensor_name = leaf_name(m->b); return true; }
+    if (a_tensor && b_scalar) { tensor_name = leaf_name(m->a); scalar_name = leaf_name(m->b); return true; }
+    return false;
+}
+
+static bool is_simple(const cExpr &e) {
+    if (is_leaf(e)) return true;
+    std::string tn, sn;
+    return is_fused_mul(e, tn, sn);
+}
+
+static EvalStep make_step(const cExpr &e, bool is_init, OpType op) {
+    if (is_leaf(e)) return {leaf_name(e), "", is_init, leaf_is_scalar(e), op};
+    std::string tn, sn;
+    is_fused_mul(e, tn, sn);
+    return {tn, sn, is_init, false, op};
+}
+
 void flatten_into(const cExpr &e, std::vector<EvalStep> &steps) {
     if (is_leaf(e)) {
-        steps.push_back({leaf_name(e), true, leaf_is_scalar(e), OpType::Add});
+        steps.push_back({leaf_name(e), "", true, leaf_is_scalar(e), OpType::Add});
         return;
     }
+
+        std::string tn, sn;
+        if (is_fused_mul(e, tn, sn)) {
+            steps.push_back({tn, sn, true, false, OpType::Add});
+            return;
+        }
+
+
     OpType op;
     const cExpr *lhs = nullptr, *rhs = nullptr;
     if (const cAdd *a = e.as<cAdd>())      { op = OpType::Add; lhs = &a->a; rhs = &a->b; }
@@ -45,21 +78,29 @@ void flatten_into(const cExpr &e, std::vector<EvalStep> &steps) {
     else if (const cSub *s = e.as<cSub>()) { op = OpType::Sub; lhs = &s->a; rhs = &s->b; }
     else internal_assert(false) << "Unknown cExpr node";
 
-    const bool lhs_leaf = is_leaf(*lhs);
-    const bool rhs_leaf = is_leaf(*rhs);
+    const bool lhs_simple = is_simple(*lhs);
+    const bool rhs_simple = is_simple(*rhs);
 
-    if (lhs_leaf && rhs_leaf) {
-        steps.push_back({leaf_name(*lhs), true,  leaf_is_scalar(*lhs), OpType::Add});
-        steps.push_back({leaf_name(*rhs), false, leaf_is_scalar(*rhs), op});
-    } else if (!lhs_leaf && rhs_leaf) {
+    if (lhs_simple && rhs_simple) {
+        steps.push_back(make_step(*lhs, true,  OpType::Add));
+        steps.push_back(make_step(*rhs, false, op));
+    } else if (!lhs_simple && rhs_simple) {
         flatten_into(*lhs, steps);
-        steps.push_back({leaf_name(*rhs), false, leaf_is_scalar(*rhs), op});
-    } else if (lhs_leaf && !rhs_leaf) {
+        steps.push_back(make_step(*rhs, false, op));
+    } else if (lhs_simple && !rhs_simple) {
         flatten_into(*rhs, steps);
-        steps.push_back({leaf_name(*lhs), false, leaf_is_scalar(*lhs), op});
+        steps.push_back(make_step(*lhs, false, op));
     } else {
-        internal_assert(false)
+        internal_assert(op != OpType::Mul)
             << "non-linear expression trees require multiple accumulators (not yet supported).";
+        flatten_into(*lhs, steps);
+        std::vector<EvalStep> rhs_steps;
+        flatten_into(*rhs, rhs_steps);
+        if (!rhs_steps.empty()) {
+            rhs_steps[0].is_init = false;
+            rhs_steps[0].op = op;
+        }
+        for (auto &st : rhs_steps) steps.push_back(st);
     }
 }
 
@@ -300,7 +341,27 @@ llir::lStmt build_kernel(const KernelInfo &info) {
                     int ti = tensor_idx(step.tensor);
                     emit_dma_load_8tiles_setup(s, curr_ptr_reg(ti), rb(2), rb(1), r(0));
                     // Read 8 tiles from VPM and accumulate into tile accumulators.
-                    if (step.is_init) {
+                    if (!step.fused_scalar.empty()) {
+                        int si = scalar_idx(step.fused_scalar);
+                        llir::lOpr sv = scalar_reg(si);
+                        if (step.is_init) {
+                            for (int k = 0; k < 8; ++k) {
+                                s.push_back(llir::Mov::make(r(0), mac("vpm")));
+                                s.push_back(arith_mul(tile_accum(k), r(0), sv));
+                            }
+                        } else {
+                            for (int k = 0; k < 8; ++k) {
+                                s.push_back(llir::Mov::make(r(3), mac("vpm")));
+                                s.push_back(arith_mul(r(3), r(3), sv));
+                                if (step.op == OpType::Add)
+                                    s.push_back(arith_add(tile_accum(k), tile_accum(k), r(3)));
+                                else if (step.op == OpType::Sub)
+                                    s.push_back(arith_sub(tile_accum(k), tile_accum(k), r(3)));
+                                else
+                                    s.push_back(arith_mul(tile_accum(k), tile_accum(k), r(3)));
+                            }
+                        }
+                    } else if (step.is_init) {
                         for (int k = 0; k < 8; ++k)
                             s.push_back(llir::Mov::make(tile_accum(k), mac("vpm")));
                     } else {
