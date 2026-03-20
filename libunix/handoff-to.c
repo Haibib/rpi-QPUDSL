@@ -18,6 +18,7 @@ void handoff_to(int our_fd, int child_fd, char *argv[]) {
         if(our_fd != child_fd) {
             if(dup2(our_fd, child_fd) < 0)
                 sys_die(dup2, "handoff_to dup2");
+            close(our_fd);
         }
         
         argv_print("about to handoff to", argv);

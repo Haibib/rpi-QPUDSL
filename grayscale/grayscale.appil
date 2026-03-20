@@ -1,0 +1,9 @@
+R = makeTensor(446, 576, float)
+G = makeTensor(446, 576, float)
+B = makeTensor(446, 576, float)
+alpha = makeScalar(0.3)    
+beta  = makeScalar(0.59)
+theta = makeScalar(0.11)
+
+Grey = makeTensor(446, 576)
+Grey = alpha * R + beta * G + theta * B
